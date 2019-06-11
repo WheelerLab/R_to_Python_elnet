@@ -191,7 +191,7 @@ get_gene_annotation <- function(gene_annot_file_name, chrom, gene_types=c('prote
 
 geneanotfile = "/Users/okoro/OneDrive/Desktop/svr/gencode.v18.annotation.parsed.txt"
 
-def get_gene_annotation (gene_anot_filepath, chrom, gene_types=["protein_coding", "pseudogene"]):
+def get_gene_annotation (gene_anot_filepath, chrom, gene_types=["protein_coding"]):
      gene_anot = pd.read_csv(gene_anot_filepath, sep="\t")
      gene_anot = gene_anot[(gene_anot["chr"]==str(chrom)) & (gene_anot["gene_type"].isin(gene_types))]
      return gene_anot
@@ -225,6 +225,7 @@ get_covariates <- function(covariate_file_name, samples) {
 
 
 cov_file = "/Users/okoro/OneDrive/desktop/svr/AFA_3_PCs.txt"
+yri_covfile = "/Users/okoro/OneDrive/Desktop/svr/YRI_final_pcs.txt"
 #cov file is space separated " ".
 # the column names contain IID which is sample ID
 def get_covariates (cov_filepath):
@@ -234,5 +235,43 @@ def get_covariates (cov_filepath):
       pc = ["PC1", "PC2", "PC3"] #a list of the PCs to retain
       cov = cov[pc]
       return cov
+  
+gex = "/Users/okoro/OneDrive/Desktop/svr/meqtl_sorted_AFA_MESA_Epi_GEX_data_sidno_Nk-10.txt"
+gex_yri = "/Users/okoro/OneDrive/Desktop/svr/YRI_expression_ens.txt"
+  
+def get_gene_expression(gene_expression_file_name, gene_annot):
+	expr_df = pd.read_csv(gene_expression_file_name, compression='gzip', header = 0, index_col = 0, delimiter='\t')
+	expr_df = expr_df.T
+	inter = list(set(gene_annot['gene_id']).intersection(set(expr_df.columns)))
+	print(len(inter))
+	expr_df = expr_df.loc[:, inter ]
+	return expr_df
+
+
+adjust_for_covariates <- function(expression_vec, cov_df) {
+  combined_df <- cbind(expression_vec, cov_df)
+  expr_resid <- summary(lm(expression_vec ~ ., data=combined_df))$residuals
+  expr_resid <- scale(expr_resid, center = TRUE, scale = TRUE)
+  expr_resid
+}
+
+import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import scale
+from pandas import DataFrame
+
+#newdf = DataFrame(scale(df), index=df.index, columns=df.columns) # if we want
+#to retain the scale array to dataframe with rownames and colnames  
+# yri_exp["ENSG00000116791.9"] # test gene expression vector
+
+def adjust_for_covariates (expr_vec, cov_df):
+      reg = LinearRegression().fit(cov_df, expr_vec)
+      ypred = reg.predict(cov_df)
+      residuals = expr_vec - ypred
+      residuals = scale(residuals)
+      return residuals
+
+  
+  
   
   
