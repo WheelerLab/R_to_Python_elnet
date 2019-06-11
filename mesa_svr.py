@@ -217,3 +217,22 @@ def get_gene_coords (gene_anot, gene):
      gene_coord = [gene_type.iloc[0,3], gene_type.iloc[0,4]]
      return gene_coord
 
+get_covariates <- function(covariate_file_name, samples) {
+  cov_df <- read.table(covariate_file_name, header = TRUE, stringsAsFactors = FALSE, row.names = 2)
+  cov_df <- cov_df[,3:5] %>% as.data.frame()
+  cov_df
+}#cov_df <- cov_df[,-1:-2] %>% as.data.frame()
+
+
+cov_file = "/Users/okoro/OneDrive/desktop/svr/AFA_3_PCs.txt"
+#cov file is space separated " ".
+# the column names contain IID which is sample ID
+def get_covariates (cov_filepath):
+      cov = pd.read_csv(cov_filepath, sep=" ")
+      cov = cov.set_index("IID") #make IID to be the row names
+      cov.index.names = [None] # remove the iid name from the row
+      pc = ["PC1", "PC2", "PC3"] #a list of the PCs to retain
+      cov = cov[pc]
+      return cov
+  
+  
