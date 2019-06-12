@@ -4,6 +4,11 @@ from sklearn.svm import SVR
 import pandas as pd
 from sklearn.model_selection import cross_val_score
 from statistics import mean
+import math
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import scale
+from pandas import DataFrame
+import pickle
 
 #MESA
 cis_gt = pd.read_csv("/Users/okoro/OneDrive/Desktop/svr/svr_cis_gt_chr6_HLA-DRB1.csv")
@@ -128,8 +133,19 @@ calc_corr(yriadj_np, ypred)
 #even better, without having to save the data, save the fitted model objects for each algorithm into a file, and reload from there.
 #this object savings can be done with python pickle module. import pickle
 
+#test in YRI
+test_adj = pd.read_csv("/Users/okoro/OneDrive/Desktop/svr/svr_adj_expression_chr1_CRYZ_YRI.csv")
+test_cis = pd.read_csv("/Users/okoro/OneDrive/Desktop/svr/svr_cis_gt_chr1_CRYZ_YRI.csv")
 
-"""
+
+with open("/Users/okoro/OneDrive/Desktop/svr/elastic", "wb") as el:
+	pickle.dump(elastic, el)
+
+nu_el = None
+with open("/Users/okoro/OneDrive/Desktop/svr/elastic", "rb") as nu:
+	nu_el = pickle.load(nu)
+
+     
 import math
 
 def calc_R2 (y, y_pred):
@@ -157,23 +173,11 @@ def calc_corr (y, y_pred):
     dem2 = math.sqrt(float(dem2))
     rho = num/(dem1*dem2)
     return rho
-"""
 
-
-get_filtered_snp_annot <- function(snp_annot_file_name) {
-  snp_annot <- read.table(snp_annot_file_name, header = T, stringsAsFactors = F) %>%
-    filter(!((refAllele == 'A' & effectAllele == 'T') |
-               (refAllele == 'T' & effectAllele == 'A') |
-               (refAllele == 'C' & effectAllele == 'G') |
-               (refAllele == 'G' & effectAllele == 'C')) &
-             !(is.na(rsid))) %>%
-    distinct(varID, .keep_all = TRUE)
-  snp_annot
-}
 
 snpfilepath = "/Users/okoro/OneDrive/Desktop/svr/AFA_1_annot.txt"
 snpfile = "/Users/okoro/OneDrive/Desktop/svr/YRI_annot.chr1.txt"
-snpfile = "/Users/okoro/OneDrive/Desktop/svr/yri_dummy_anot.txt"
+#snpfile = "/Users/okoro/OneDrive/Desktop/svr/yri_dummy_anot.txt"
 
 
 def get_filtered_snp_annot (snpfilepath):
@@ -184,12 +188,6 @@ def get_filtered_snp_annot (snpfilepath):
      return snpanot
      
 
-get_gene_annotation <- function(gene_annot_file_name, chrom, gene_types=c('protein_coding')){
-  gene_df <- read.table(gene_annot_file_name, header = TRUE, stringsAsFactors = FALSE) %>%
-    filter((chr == chrom) & gene_type %in% gene_types)
-  gene_df
-}
-
 geneanotfile = "/Users/okoro/OneDrive/Desktop/svr/gencode.v18.annotation.parsed.txt"
 
 def get_gene_annotation (gene_anot_filepath, chrom, gene_types=["protein_coding"]):
@@ -198,20 +196,11 @@ def get_gene_annotation (gene_anot_filepath, chrom, gene_types=["protein_coding"
      return gene_anot
 
 
-get_gene_type <- function(gene_annot, gene) {
-  filter(gene_annot, gene_id == gene)$gene_type
-}
-
-
 def get_gene_type (gene_anot, gene):
      gene_type = gene_anot[gene_anot["gene_id"]==gene]
      gene_type = gene_type.iloc[0,5]
      return gene_type
 
-
-get_gene_coords <- function(gene_annot, gene) {
-  row <- gene_annot[which(gene_annot$gene_id == gene),]
-  c(row$start, row$end)
 
 # gene has to be string
 def get_gene_coords (gene_anot, gene):
@@ -219,11 +208,6 @@ def get_gene_coords (gene_anot, gene):
      gene_coord = [gene_type.iloc[0,3], gene_type.iloc[0,4]]
      return gene_coord
 
-get_covariates <- function(covariate_file_name, samples) {
-  cov_df <- read.table(covariate_file_name, header = TRUE, stringsAsFactors = FALSE, row.names = 2)
-  cov_df <- cov_df[,3:5] %>% as.data.frame()
-  cov_df
-}#cov_df <- cov_df[,-1:-2] %>% as.data.frame()
 
 
 cov_file = "/Users/okoro/OneDrive/desktop/svr/AFA_3_PCs.txt"
@@ -240,33 +224,22 @@ def get_covariates (cov_filepath):
   
 gex = "/Users/okoro/OneDrive/Desktop/svr/meqtl_sorted_AFA_MESA_Epi_GEX_data_sidno_Nk-10.txt"
 gex_yri = "/Users/okoro/OneDrive/Desktop/svr/YRI_expression_ens.txt"
-  
+
+
 def get_gene_expression(gene_expression_file_name, gene_annot):
-	expr_df = pd.read_csv(gene_expression_file_name, compression='gzip', header = 0, index_col = 0, delimiter='\t')
+	expr_df = pd.read_csv(gene_expression_file_name, header = 0, index_col = 0, delimiter='\t')
 	expr_df = expr_df.T
 	inter = list(set(gene_annot['gene_id']).intersection(set(expr_df.columns)))
-	print(len(inter))
+	#print(len(inter))
 	expr_df = expr_df.loc[:, inter ]
 	return expr_df
 
-
-adjust_for_covariates <- function(expression_vec, cov_df) {
-  combined_df <- cbind(expression_vec, cov_df)
-  expr_resid <- summary(lm(expression_vec ~ ., data=combined_df))$residuals
-  expr_resid <- scale(expr_resid, center = TRUE, scale = TRUE)
-  expr_resid
-}
-
-import numpy as np
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import scale
-from pandas import DataFrame
 
 #newdf = DataFrame(scale(df), index=df.index, columns=df.columns) # if we want
 #to retain the scale array to dataframe with rownames and colnames  
 # yri_exp["ENSG00000116791.9"] # test gene expression vector
 
-def adjust_for_covariates (expr_vec, cov_df):
+def adjust_for_covariates (expr_vec, cov_df):   
       reg = LinearRegression().fit(cov_df, expr_vec)
       ypred = reg.predict(cov_df)
       residuals = expr_vec - ypred
@@ -274,6 +247,7 @@ def adjust_for_covariates (expr_vec, cov_df):
       return residuals
 
 yrisnpfile = "/Users/okoro/OneDrive/Desktop/svr/YRI_snp.chr1.txt"
+afa_snp = "/Users/okoro/OneDrive/Desktop/svr/AFA_1_snp.txt"
 
 def get_maf_filtered_genotype(genotype_file_name,  maf):
 	gt_df = pd.read_csv(genotype_file_name, 'r', header = 0, index_col = 0,delimiter='\t')
@@ -283,20 +257,6 @@ def get_maf_filtered_genotype(genotype_file_name,  maf):
 	gt_df = gt_df.loc[ effect_allele_boolean ]
 	gt_df = gt_df.T
 	return gt_df
-
-get_cis_genotype <- function(gt_df, snp_annot, coords, cis_window) {
-  snp_info <- snp_annot %>% filter((pos >= (coords[1] - cis_window) & !is.na(rsid)) & (pos <= (coords[2] + cis_window)))
-  if (nrow(snp_info) == 0)
-    return(NA)
-  cis_gt <- gt_df %>% select(one_of(intersect(snp_info$varID, colnames(gt_df))))
-  column_labels <- colnames(cis_gt)
-  row_labels <- rownames(cis_gt)
-  # Convert cis_gt to a matrix for glmnet
-  cis_gt <- matrix(as.matrix(cis_gt), ncol=ncol(cis_gt)) # R is such a bad language.
-  colnames(cis_gt) <- column_labels
-  rownames(cis_gt) <- row_labels
-  cis_gt
-}
 
 
 def get_cis_genotype (gt_df, snp_annot, coords, cis_window=1000000):
@@ -308,7 +268,9 @@ def get_cis_genotype (gt_df, snp_annot, coords, cis_window=1000000):
       intersect = snps_intersect(gtdf_col, snpinfo_col) #this function was defined earlier
       cis_gt = gt_df[intersect]
       return cis_gt
-  
+
+#Still working on this
+"""  
 do_covariance <- function(gene_id, cis_gt, rsids, varIDs) {
   model_gt <- cis_gt[,varIDs, drop=FALSE]
   colnames(model_gt) <- rsids
@@ -326,3 +288,4 @@ def do_covariance (gene_id, cis_gt, rsids, varIDs): #working on this but have no
   model.columns = rsids
   geno_cov = model_gt.values
   geno_cov = np.cov(geno_cov) #you can join to do, but i will pause here.
+"""
