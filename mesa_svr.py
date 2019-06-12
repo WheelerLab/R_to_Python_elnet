@@ -309,4 +309,20 @@ def get_cis_genotype (gt_df, snp_annot, coords, cis_window=1000000):
       cis_gt = gt_df[intersect]
       return cis_gt
   
-  
+do_covariance <- function(gene_id, cis_gt, rsids, varIDs) {
+  model_gt <- cis_gt[,varIDs, drop=FALSE]
+  colnames(model_gt) <- rsids
+  geno_cov <- cov(model_gt)
+  geno_cov[lower.tri(geno_cov)] <- NA
+  cov_df <- melt(geno_cov, varnames = c("rsid1", "rsid2"), na.rm = TRUE) %>%
+    mutate(gene=gene_id) %>%
+    select(GENE=gene, RSID1=rsid1, RSID2=rsid2, VALUE=value) %>%
+    arrange(GENE, RSID1, RSID2)
+  cov_df
+}
+
+def do_covariance (gene_id, cis_gt, rsids, varIDs): #working on this but have not found solution
+  model_gt = cis_gt[varIDs]
+  model.columns = rsids
+  geno_cov = model_gt.values
+  geno_cov = np.cov(geno_cov) #you can join to do, but i will pause here.
