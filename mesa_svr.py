@@ -174,7 +174,8 @@ get_filtered_snp_annot <- function(snp_annot_file_name) {
 snpfilepath = "/Users/okoro/OneDrive/Desktop/svr/AFA_1_annot.txt"
 snpfile = "/Users/okoro/OneDrive/Desktop/svr/YRI_annot.chr1.txt"
 snpfile = "/Users/okoro/OneDrive/Desktop/svr/yri_dummy_anot.txt"
-     
+
+
 def get_filtered_snp_annot (snpfilepath):
      snpanot = pd.read_csv(snpfilepath, sep="\t")
      #snpanot = snpanot[((snpanot["refAllele"]=="A") & (snpanot["effectAllele"]=="C")) | ((snpanot["refAllele"]=="C") & (snpanot["effectAllele"]=="A")) | ((snpanot["refAllele"]=="A") & (snpanot["effectAllele"]=="G")) | ((snpanot["refAllele"]=="G") & (snpanot["effectAllele"]=="A")) | ((snpanot["refAllele"]=="T") & (snpanot["effectAllele"]=="G")) | ((snpanot["refAllele"]=="G") & (snpanot["effectAllele"]=="T")) | ((snpanot["refAllele"]=="T") & (snpanot["effectAllele"]=="C")) | ((snpanot["refAllele"]=="C") & (snpanot["effectAllele"]=="T"))]
@@ -212,6 +213,7 @@ get_gene_coords <- function(gene_annot, gene) {
   row <- gene_annot[which(gene_annot$gene_id == gene),]
   c(row$start, row$end)
 
+# gene has to be string
 def get_gene_coords (gene_anot, gene):
      gene_type = gene_anot[gene_anot["gene_id"]==gene]
      gene_coord = [gene_type.iloc[0,3], gene_type.iloc[0,4]]
@@ -271,7 +273,40 @@ def adjust_for_covariates (expr_vec, cov_df):
       residuals = scale(residuals)
       return residuals
 
-  
-  
+yrisnpfile = "/Users/okoro/OneDrive/Desktop/svr/YRI_snp.chr1.txt"
+
+def get_maf_filtered_genotype(genotype_file_name,  maf):
+	gt_df = pd.read_csv(genotype_file_name, 'r', header = 0, index_col = 0,delimiter='\t')
+	effect_allele_freqs = gt_df.mean(axis=1)
+	effect_allele_freqs = [ x / 2 for x in effect_allele_freqs ]
+	effect_allele_boolean = pd.Series([ ((x >= maf) & (x <= (1 - maf))) for x in effect_allele_freqs ]).values
+	gt_df = gt_df.loc[ effect_allele_boolean ]
+	gt_df = gt_df.T
+	return gt_df
+
+get_cis_genotype <- function(gt_df, snp_annot, coords, cis_window) {
+  snp_info <- snp_annot %>% filter((pos >= (coords[1] - cis_window) & !is.na(rsid)) & (pos <= (coords[2] + cis_window)))
+  if (nrow(snp_info) == 0)
+    return(NA)
+  cis_gt <- gt_df %>% select(one_of(intersect(snp_info$varID, colnames(gt_df))))
+  column_labels <- colnames(cis_gt)
+  row_labels <- rownames(cis_gt)
+  # Convert cis_gt to a matrix for glmnet
+  cis_gt <- matrix(as.matrix(cis_gt), ncol=ncol(cis_gt)) # R is such a bad language.
+  colnames(cis_gt) <- column_labels
+  rownames(cis_gt) <- row_labels
+  cis_gt
+}
+
+
+def get_cis_genotype (gt_df, snp_annot, coords, cis_window=1000000):
+      snp_info = snpannot[(snpannot['pos'] >= (coords[0] - cis_window)) & (snpannot['rsid'].notna()) & (snpannot['pos'] <= (coords[1] + cis_window))]
+      if len(snp_info) == 0:
+          return NaN
+      gtdf_col = list(gt_df.columns)
+      snpinfo_col = list(snp_info["varID"])
+      intersect = snps_intersect(gtdf_col, snpinfo_col) #this function was defined earlier
+      cis_gt = gt_df[intersect]
+      return cis_gt
   
   
