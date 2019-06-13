@@ -114,7 +114,7 @@ afa_snp = "/home/paul/mesa_models/AFA_"+str(chrom)+"_snp.txt"
 gex = "/home/paul/mesa_models/meqtl_sorted_AFA_MESA_Epi_GEX_data_sidno_Nk-10.txt"
 cov_file = "/home/paul/mesa_models/AFA_3_PCs.txt"
 geneanotfile = "/home/paul/mesa_models/gencode.v18.annotation.parsed.txt"
-snpfilepath = "/home/paul/mesa_models/AFA_"str(chrom)+"1_annot.txt"
+snpfilepath = "/home/paul/mesa_models/AFA_"+str(chrom)+"1_annot.txt"
 
 
 snpannot = get_filtered_snp_annot(snpfilepath)
