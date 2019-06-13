@@ -12,6 +12,7 @@ import pickle
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
+import time
 
 def get_filtered_snp_annot (snpfilepath):
      snpanot = pd.read_csv(snpfilepath, sep="\t")
@@ -107,12 +108,13 @@ def calc_corr (y, y_pred):
 def snps_intersect(list1, list2):
      return list(set(list1) & set(list2))
 
+chrom = 22 #chromosome number
 
-afa_snp = "/Users/okoro/OneDrive/Desktop/svr/AFA_1_snp.txt"
-gex = "/Users/okoro/OneDrive/Desktop/svr/meqtl_sorted_AFA_MESA_Epi_GEX_data_sidno_Nk-10.txt"
-cov_file = "/Users/okoro/OneDrive/desktop/svr/AFA_3_PCs.txt"
-geneanotfile = "/Users/okoro/OneDrive/Desktop/svr/gencode.v18.annotation.parsed.txt"
-snpfilepath = "/Users/okoro/OneDrive/Desktop/svr/AFA_1_annot.txt"
+afa_snp = "/home/paul/mesa_models/AFA_"+str(chrom)+"_snp.txt"
+gex = "/home/paul/mesa_models/meqtl_sorted_AFA_MESA_Epi_GEX_data_sidno_Nk-10.txt"
+cov_file = "/home/paul/mesa_models/AFA_3_PCs.txt"
+geneanotfile = "/home/paul/mesa_models/gencode.v18.annotation.parsed.txt"
+snpfilepath = "/home/paul/mesa_models/AFA_"str(chrom)+"1_annot.txt"
 
 
 snpannot = get_filtered_snp_annot(snpfilepath)
@@ -122,12 +124,56 @@ expr_df = get_gene_expression(gex, geneannot)
 genes = list(expr_df.columns)
 gt_df = get_maf_filtered_genotype(afa_snp, 0.01)
 
+#algorithms to use
+rf = RandomForestRegressor(max_depth=None, random_state=1234, n_estimators=100)
+svrl = SVR(kernel="linear", gamma="auto")
+mean(cross_val_score(svrl, cis_gt, adj_exp.ravel(), cv=5))
+svr = SVR(kernel="rbf", gamma="auto")
+mean(cross_val_score(svr, cis_gt, adj_exp.ravel(), cv=5))
+knn = KNeighborsRegressor(n_neighbors=10, weights = "distance")
+mean(cross_val_score(knn, cis_gt, adj_exp, cv=5))
+#models = [rf,svrl,svr,knn]
+
+#text file where to write out the cv results
+open("/home/paul/mesa_models/python_ml_models/rf_cv_chr"+str(chrom)+".txt", "w").write("Gene_ID"+"\t"+"CV_R2"+"\t"+"time(s)"+"\n")
+open("/home/paul/mesa_models/python_ml_models/knn_cv_chr"+str(chrom)+".txt", "w").write("Gene_ID"+"\t"+"CV_R2"+"\t"+"time(s)"+"\n")
+open("/home/paul/mesa_models/python_ml_models/svr_linear_cv_chr"+str(chrom)+".txt", "w").write("Gene_ID"+"\t"+"CV_R2"+"\t"+"time(s)"+"\n")
+open("/home/paul/mesa_models/python_ml_models/svr_rbf_cv_chr"+str(chrom)+".txt", "w").write("Gene_ID"+"\t"+"CV_R2"+"\t"+"time(s)"+"\n")
 
 for gene in genes:
     coords = get_gene_coords(geneannot, gene)
     expr_vec = expr[gene]
     adj_exp = adjust_for_covariates(expr_vec, cov)
     cis_gt = get_cis_genotype(gt_df, snpannot, coords)
+    #build the model
+    adj_exp = adj_exp.values
+    cis_gt = cis_gt.values
+    #these steps can be shortened with a loop where the models are in a list or dictionary
+    #Random Forest
+    rf_t0 = time.time()#do rf and time it
+    rf_cv = str(float(mean(cross_val_score(rf, cis_gt, adj_exp.ravel(), cv=5))))
+    rf_t1 = time.time()
+    rf_tt = str(float(rf_t1 - rf_t0))
+    open("/home/paul/mesa_models/python_ml_models/rf_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+rf_cv+"\t"+rf_tt+"\n")
+    #SVR Linear
+    svrl_t0 = time.time()#time it
+    svrl_cv = str(float(mean(cross_val_score(svrl, cis_gt, adj_exp.ravel(), cv=5))))
+    svrl_t1 = time.time()
+    svrl_tt = str(float(svrl_t1 - svrl_t0))
+    open("/home/paul/mesa_models/python_ml_models/svr_linear_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+svrl_cv+"\t"+svrl_tt+"\n")
+    #SVR RBF
+    svr_t0 = time.time()#time it
+    svr_cv = str(float(mean(cross_val_score(svr, cis_gt, adj_exp.ravel(), cv=5))))
+    svr_t1 = time.time()
+    svr_tt = str(float(svr_t1 - svr_t0))
+    open("/home/paul/mesa_models/python_ml_models/svr_rbf_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+svr_cv+"\t"+svr_tt+"\n")
+    #KNN
+    knn_t0 = time.time()#time it
+    knn_cv = str(float(mean(cross_val_score(knn, cis_gt, adj_exp.ravel(), cv=5))))
+    knn_t1 = time.time()
+    knn_tt = str(float(knn_t1 - knn_t0))
+    open("/home/paul/mesa_models/python_ml_models/knn_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+knn_cv+"\t"+knn_tt+"\n")
+    
 
 
 #coords = get_gene_coords(geneannot, "geneID")#this is where to loop for gene id
