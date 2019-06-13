@@ -16,7 +16,8 @@ import time
 
 
 #time the whole script per chromosome
-open("/home/paul/mesa_models/python_ml_models/whole_script_chrom_timer.txt", "w").write("Chrom"+"\t"+"Time(s)"+"\n")
+chrom = 20
+open("/home/paul/mesa_models/python_ml_models/whole_script_chr"+str(chrom)+"_timer.txt", "w").write("Chrom"+"\t"+"Time(s)"+"\n")
 t0 = time.time()
 
 #important functions needed
@@ -114,7 +115,7 @@ def calc_corr (y, y_pred):
 def snps_intersect(list1, list2):
      return list(set(list1) & set(list2))
 
-chrom = 22 #chromosome number
+#chrom = 21 #chromosome number. #this is removed. and initialized early at the top
 
 afa_snp = "/home/paul/mesa_models/AFA_"+str(chrom)+"_snp.txt"
 gex = "/home/paul/mesa_models/meqtl_sorted_AFA_MESA_Epi_GEX_data_sidno_Nk-10.txt"
@@ -185,7 +186,7 @@ for gene in genes:
 
 t1 = time.time()
 total = str(float(t1-t0))
-open("/home/paul/mesa_models/python_ml_models/whole_script_chrom_timer.txt", "a").write(str(chrom)+"\t"+total+"\n")
+open("/home/paul/mesa_models/python_ml_models/whole_script_chr"+str(chrom)+"_timer.txt", "a").write(str(chrom)+"\t"+total+"\n")
 #coords = get_gene_coords(geneannot, "geneID")#this is where to loop for gene id
 #adj_exp = adjust_for_covariates(expr_vec, cov) #this is loop side
 #cis_gt = get_cis_genotype(gt_df, snpannot, coords) #this is loop side
