@@ -104,8 +104,32 @@ def calc_corr (y, y_pred):
     rho = num/(dem1*dem2)
     return rho
 
+def snps_intersect(list1, list2):
+     return list(set(list1) & set(list2))
+
+
 afa_snp = "/Users/okoro/OneDrive/Desktop/svr/AFA_1_snp.txt"
 gex = "/Users/okoro/OneDrive/Desktop/svr/meqtl_sorted_AFA_MESA_Epi_GEX_data_sidno_Nk-10.txt"
 cov_file = "/Users/okoro/OneDrive/desktop/svr/AFA_3_PCs.txt"
 geneanotfile = "/Users/okoro/OneDrive/Desktop/svr/gencode.v18.annotation.parsed.txt"
 snpfilepath = "/Users/okoro/OneDrive/Desktop/svr/AFA_1_annot.txt"
+
+
+snpannot = get_filtered_snp_annot(snpfilepath)
+geneannot = get_gene_annotation(geneanotfile, 1)
+cov = get_covariates(cov_file)
+expr_df = get_gene_expression(gex, geneannot)
+genes = list(expr_df.columns)
+gt_df = get_maf_filtered_genotype(afa_snp, 0.01)
+
+
+for gene in genes:
+    coords = get_gene_coords(geneannot, gene)
+    expr_vec = expr[gene]
+    adj_exp = adjust_for_covariates(expr_vec, cov)
+    cis_gt = get_cis_genotype(gt_df, snpannot, coords)
+
+
+#coords = get_gene_coords(geneannot, "geneID")#this is where to loop for gene id
+#adj_exp = adjust_for_covariates(expr_vec, cov) #this is loop side
+#cis_gt = get_cis_genotype(gt_df, snpannot, coords) #this is loop side
