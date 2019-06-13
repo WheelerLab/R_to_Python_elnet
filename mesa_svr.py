@@ -238,6 +238,7 @@ def get_gene_expression(gene_expression_file_name, gene_annot):
 #newdf = DataFrame(scale(df), index=df.index, columns=df.columns) # if we want
 #to retain the scale array to dataframe with rownames and colnames  
 # yri_exp["ENSG00000116791.9"] # test gene expression vector
+# pproblem gene in chr22 ENSG00000117215.10
 
 def adjust_for_covariates (expr_vec, cov_df):   
       reg = LinearRegression().fit(cov_df, expr_vec)

@@ -14,6 +14,12 @@ from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
 import time
 
+
+#time the whole script per chromosome
+open("/home/paul/mesa_models/python_ml_models/whole_script_chrom_timer.txt", "w").write("Chrom"+"\t"+"Time(s)"+"\n")
+t0 = time.time()
+
+#important functions needed
 def get_filtered_snp_annot (snpfilepath):
      snpanot = pd.read_csv(snpfilepath, sep="\t")
      #snpanot = snpanot[((snpanot["refAllele"]=="A") & (snpanot["effectAllele"]=="C")) | ((snpanot["refAllele"]=="C") & (snpanot["effectAllele"]=="A")) | ((snpanot["refAllele"]=="A") & (snpanot["effectAllele"]=="G")) | ((snpanot["refAllele"]=="G") & (snpanot["effectAllele"]=="A")) | ((snpanot["refAllele"]=="T") & (snpanot["effectAllele"]=="G")) | ((snpanot["refAllele"]=="G") & (snpanot["effectAllele"]=="T")) | ((snpanot["refAllele"]=="T") & (snpanot["effectAllele"]=="C")) | ((snpanot["refAllele"]=="C") & (snpanot["effectAllele"]=="T"))]
@@ -114,11 +120,11 @@ afa_snp = "/home/paul/mesa_models/AFA_"+str(chrom)+"_snp.txt"
 gex = "/home/paul/mesa_models/meqtl_sorted_AFA_MESA_Epi_GEX_data_sidno_Nk-10.txt"
 cov_file = "/home/paul/mesa_models/AFA_3_PCs.txt"
 geneanotfile = "/home/paul/mesa_models/gencode.v18.annotation.parsed.txt"
-snpfilepath = "/home/paul/mesa_models/AFA_"+str(chrom)+"1_annot.txt"
+snpfilepath = "/home/paul/mesa_models/AFA_"+str(chrom)+"_annot.txt"
 
 
 snpannot = get_filtered_snp_annot(snpfilepath)
-geneannot = get_gene_annotation(geneanotfile, 1)
+geneannot = get_gene_annotation(geneanotfile, chrom)
 cov = get_covariates(cov_file)
 expr_df = get_gene_expression(gex, geneannot)
 genes = list(expr_df.columns)
@@ -127,11 +133,8 @@ gt_df = get_maf_filtered_genotype(afa_snp, 0.01)
 #algorithms to use
 rf = RandomForestRegressor(max_depth=None, random_state=1234, n_estimators=100)
 svrl = SVR(kernel="linear", gamma="auto")
-mean(cross_val_score(svrl, cis_gt, adj_exp.ravel(), cv=5))
 svr = SVR(kernel="rbf", gamma="auto")
-mean(cross_val_score(svr, cis_gt, adj_exp.ravel(), cv=5))
 knn = KNeighborsRegressor(n_neighbors=10, weights = "distance")
-mean(cross_val_score(knn, cis_gt, adj_exp, cv=5))
 #models = [rf,svrl,svr,knn]
 
 #text file where to write out the cv results
@@ -142,11 +145,16 @@ open("/home/paul/mesa_models/python_ml_models/results/svr_rbf_cv_chr"+str(chrom)
 
 for gene in genes:
     coords = get_gene_coords(geneannot, gene)
-    expr_vec = expr[gene]
-    adj_exp = adjust_for_covariates(expr_vec, cov)
+    #print(gene)
+    expr_vec = expr_df[gene]
+    #print(expr_vec)
+    adj_exp = adjust_for_covariates(list(expr_vec), cov)
+    #break
+    #expr_vec = expr_df[gene]
+    #adj_exp = adjust_for_covariates(expr_vec, cov)
     cis_gt = get_cis_genotype(gt_df, snpannot, coords)
     #build the model
-    adj_exp = adj_exp.values
+    #adj_exp = adj_exp.values #not needed after making adj_exp a numpy array above
     cis_gt = cis_gt.values
     #these steps can be shortened with a loop where the models are in a list or dictionary
     #Random Forest
@@ -175,7 +183,10 @@ for gene in genes:
     open("/home/paul/mesa_models/python_ml_models/results/knn_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+knn_cv+"\t"+knn_tt+"\n")
     
 
-
+t1 = time.time()
+total = str(float(t1-t0))
+open("/home/paul/mesa_models/python_ml_models/whole_script_chrom_timer.txt", "a").write(str(chrom)+"\t"+total+"\n")
 #coords = get_gene_coords(geneannot, "geneID")#this is where to loop for gene id
 #adj_exp = adjust_for_covariates(expr_vec, cov) #this is loop side
 #cis_gt = get_cis_genotype(gt_df, snpannot, coords) #this is loop side
+
