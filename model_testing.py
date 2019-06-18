@@ -13,6 +13,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
 import time
+from scipy import stats
 
 
 #time the whole script per chromosome
@@ -137,6 +138,7 @@ cov = get_covariates(cov_file)
 expr_df = get_gene_expression(gex, geneannot)
 genes = list(expr_df.columns)
 gt_df = get_maf_filtered_genotype(afa_snp, 0.01)
+train_ids = list(gt_df.index)
 
 #test functioning
 test_snpannot = get_filtered_snp_annot(test_snpfile)
@@ -144,6 +146,9 @@ test_cov = get_covariates(test_covfile)
 test_expr_df = get_gene_expression(test_gex, geneannot)
 test_genes = list(test_expr_df.columns)
 test_gt_df = get_maf_filtered_genotype(test_snp, 0.01)
+test_ids = list(test_gt_df.index)
+ypred_frame = pd.DataFrame() #frame to store the ypred
+test_adj_exp_frame = pd.DataFrame() #frame to store test adjusted expression
 
 #algorithms to use
 rf = RandomForestRegressor(max_depth=None, random_state=1234, n_estimators=100)
@@ -153,25 +158,26 @@ knn = KNeighborsRegressor(n_neighbors=10, weights = "distance")
 #models = [rf,svrl,svr,knn]
 
 #text file where to write out the cv and test results
-open("/home/paul/mesa_models/python_ml_models/results/"+pop+"_rf_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"cv_R2"+"\t"+"obs_expr(pc_adj)"+"\t"+"pred_expr"+"\t"+"corr(obs_vs_pred)"+"\n")
-open("/home/paul/mesa_models/python_ml_models/results/"+pop+"_knn_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"cv_R2"+"\t"+"obs_expr(pc_adj)"+"\t"+"pred_expr"+"\t"+"corr(obs_vs_pred)"+"\n")
-open("/home/paul/mesa_models/python_ml_models/results/"+pop+"_svr_linear_cv_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"cv_R2"+"\t"+"obs_expr(pc_adj)"+"\t"+"pred_expr"+"\t"+"corr(obs_vs_pred)"+"\n")
-open("/home/paul/mesa_models/python_ml_models/results/"+pop+"_svr_rbf_cv_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"cv_R2"+"\t"+"obs_expr(pc_adj)"+"\t"+"pred_expr"+"\t"+"corr(obs_vs_pred)"+"\n")
+open("/home/paul/mesa_models/python_ml_models/results/"+pop+"_rf_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
+open("/home/paul/mesa_models/python_ml_models/results/"+pop+"_knn_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
+open("/home/paul/mesa_models/python_ml_models/results/"+pop+"_svr_linear_cv_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
+open("/home/paul/mesa_models/python_ml_models/results/"+pop+"_svr_rbf_cv_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
 
 for gene in genes:
     if gene in test_genes:
         coords = get_gene_coords(geneannot, gene)
         #print(gene)
-        expr_vec = expr_df[gene]
-        test_expr_vec = test_expr_df[gene]
+        expr_vec = expr_df[gene]#observed exp
+        test_expr_vec = test_expr_df[gene]#observed exp
         #print(expr_vec)
-        adj_exp = adjust_for_covariates(list(expr_vec), cov)
-        test_adj_exp = adjust_for_covariates(list(test_expr_vec), test_cov)
+        adj_exp = adjust_for_covariates(list(expr_vec), cov)#adjusted exp
+        test_adj_exp = adjust_for_covariates(list(test_expr_vec), test_cov)#adjusted exp
         #break
         #expr_vec = expr_df[gene]
         #adj_exp = adjust_for_covariates(expr_vec, cov)
         cis_gt = get_cis_genotype(gt_df, snpannot, coords)
         test_cis_gt = get_cis_genotype(test_gt_df, test_snpannot, coords)
+        gg = [gene] #just to cast the gene id to list because pandas need it to be in list before it can be used as col name
 
         #take the snps
         train_snps = list(cis_gt.columns)
@@ -185,14 +191,44 @@ for gene in genes:
         #adj_exp = adj_exp.values #not needed after making adj_exp a numpy array above
         cis_gt = cis_gt.values
         test_cis_gt = test_cis_gt.values
+        test_yobs = test_expr_vec.values
+
+        #prepare test_adj_exp for writing out to a file
+        test_adj_exp_pd = pd.DataFrame(test_adj_exp)
+        test_adj_exp_pd.columns = gg
+        test_adj_exp_pd.index = test_ids
+        test_adj_exp_frame = pd.concat([test_adj_exp_frame,test_adj_exp_pd], axis=1)
         
         #these steps can be shortened with a loop where the models are in a list or dictionary
         #Random Forest
-        rf_t0 = time.time()#do rf and time it
-        rf_cv = str(float(mean(cross_val_score(rf, cis_gt, adj_exp.ravel(), cv=5))))
-        rf_t1 = time.time()
-        rf_tt = str(float(rf_t1 - rf_t0))
-        open("/home/paul/mesa_models/python_ml_models/results/rf_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+rf_cv+"\t"+rf_tt+"\n")
+        #rf_t0 = time.time()#do rf and time it
+        #rf_cv = str(float(mean(cross_val_score(rf, cis_gt, adj_exp.ravel(), cv=5))))
+        #rf_t1 = time.time()
+        #rf_tt = str(float(rf_t1 - rf_t0))
+        rf.fit(cis_gt, adj_exp.ravel())
+        ypred = rf.predict(test_cis_gt)
+
+        #prepare ypred for writing out to a file
+        yrep_pd = pd.DataFrame(ypred)
+        
+        ypred_pd.columns = gg
+        ypred_pd.index = test_ids
+        ypred_frame_rf = pd.concat([ypred_frame_rf, ypred_pd], axis=1)
+        
+        pa = stats.pearsonr(test_adj_exp, ypred)
+        pacoef = str(float(pa[0]))
+        papval = str(float(pa[1]))
+        pb = stats.pearsonr(test_yobs, ypred)
+        pbcoef = str(float(pb[0]))
+        pbpval = str(float(pb[1]))
+        pc = stats.spearmanr(test_adj_exp, ypred)
+        pccoef = str(float(pc[0]))
+        pcpval = str(float(pc[1]))
+        pd = stats.spearmanr(test_yobs, ypred)
+        pdcoef = str(float(pd[0]))
+        pdpval = str(float(pd[1]))
+        open("/home/paul/mesa_models/python_ml_models/results/"pop+"_rf_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+rf_cv+"\t"+rf_tt+"\n")
+
         #SVR Linear
         svrl_t0 = time.time()#time it
         svrl_cv = str(float(mean(cross_val_score(svrl, cis_gt, adj_exp.ravel(), cv=5))))
@@ -213,6 +249,8 @@ for gene in genes:
         open("/home/paul/mesa_models/python_ml_models/results/knn_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+knn_cv+"\t"+knn_tt+"\n")
         
 
+ypred_frame_rf.to_csv("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_rf_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
+test_adj_exp_frame.to_csv("/home/paul/mesa_models/python_ml_models/results/"+pop+"_pc_adjusted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
 #t1 = time.time()
 #total = str(float(t1-t0))
 #open("/home/paul/mesa_models/python_ml_models/whole_script_chr"+str(chrom)+"_timer.txt", "a").write(str(chrom)+"\t"+total+"\n")
