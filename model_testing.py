@@ -215,7 +215,7 @@ for gene in genes:
         ypred = rf.predict(test_cis_gt)
 
         #prepare ypred for writing out to a file
-        yprep_pd = pd.DataFrame(ypred)
+        ypred_pd = pd.DataFrame(ypred)
         
         ypred_pd.columns = gg
         ypred_pd.index = test_ids
