@@ -126,10 +126,10 @@ geneanotfile = "/home/paul/mesa_models/gencode.v18.annotation.parsed.txt"
 snpfilepath = "/home/paul/mesa_models/AFA_"+str(chrom)+"_annot.txt"
 
 #test data files
-test_snp = "/home/paul/mesa_models/CAU_"+str(chrom)+"_snp.txt"
+test_snp = "/home/paul/mesa_models/cau/CAU_"+str(chrom)+"_snp.txt"
 test_gex = "/home/paul/mesa_models/meqtl_sorted_CAU_MESA_Epi_GEX_data_sidno_Nk-10.txt"
-test_covfile = "/home/paul/mesa_models/CAU_3_PCs.txt"
-test_snpfile = "/home/paul/mesa_models/CAU_"+str(chrom)+"_annot.txt"
+test_covfile = "/home/paul/mesa_models/cau/CAU_3_PCs.txt"
+test_snpfile = "/home/paul/mesa_models/cau/CAU_"+str(chrom)+"_annot.txt"
 
 #train functioning
 snpannot = get_filtered_snp_annot(snpfilepath)
