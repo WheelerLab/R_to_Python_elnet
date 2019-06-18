@@ -17,7 +17,7 @@ from scipy import stats
 
 
 #time the whole script per chromosome
-chrom = 20
+chrom = 22
 pop = "CAU"
 #open("/home/paul/mesa_models/python_ml_models/whole_script_chr"+str(chrom)+"_timer.txt", "w").write("Chrom"+"\t"+"Time(s)"+"\n")
 #t0 = time.time()
@@ -215,7 +215,7 @@ for gene in genes:
         ypred = rf.predict(test_cis_gt)
 
         #prepare ypred for writing out to a file
-        yrep_pd = pd.DataFrame(ypred)
+        yprep_pd = pd.DataFrame(ypred)
         
         ypred_pd.columns = gg
         ypred_pd.index = test_ids
@@ -233,7 +233,7 @@ for gene in genes:
         sd = stats.spearmanr(test_yobs, ypred)
         sdcoef = str(float(sd[0]))
         sdpval = str(float(sd[1]))
-        open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"pop+"_rf_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
+        open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_rf_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
 
         #SVR Linear
         #svrl_t0 = time.time()#time it
@@ -244,7 +244,7 @@ for gene in genes:
         ypred = svrl.predict(test_cis_gt)
         
         #prepare ypred for writing out to a file
-        yrep_pd = pd.DataFrame(ypred)
+        yprep_pd = pd.DataFrame(ypred)
         
         ypred_pd.columns = gg
         ypred_pd.index = test_ids
@@ -262,7 +262,7 @@ for gene in genes:
         sd = stats.spearmanr(test_yobs, ypred)
         sdcoef = str(float(sd[0]))
         sdpval = str(float(sd[1]))
-        open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"pop+"_svr_linear_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
+        open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_svr_linear_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
         
         #SVR RBF
         #svr_t0 = time.time()#time it
@@ -273,7 +273,7 @@ for gene in genes:
         ypred = svr.predict(test_cis_gt)
         
         #prepare ypred for writing out to a file
-        yrep_pd = pd.DataFrame(ypred)
+        yprep_pd = pd.DataFrame(ypred)
         
         ypred_pd.columns = gg
         ypred_pd.index = test_ids
@@ -291,7 +291,7 @@ for gene in genes:
         sd = stats.spearmanr(test_yobs, ypred)
         sdcoef = str(float(sd[0]))
         sdpval = str(float(sd[1]))
-        open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"pop+"_svr_rbf_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
+        open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_svr_rbf_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
 
         #KNN
         #knn_t0 = time.time()#time it
@@ -302,7 +302,7 @@ for gene in genes:
         ypred = knn.predict(test_cis_gt)
         
         #prepare ypred for writing out to a file
-        yrep_pd = pd.DataFrame(ypred)
+        yprep_pd = pd.DataFrame(ypred)
         
         ypred_pd.columns = gg
         ypred_pd.index = test_ids
@@ -320,7 +320,7 @@ for gene in genes:
         sd = stats.spearmanr(test_yobs, ypred)
         sdcoef = str(float(sd[0]))
         sdpval = str(float(sd[1]))
-        open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"pop+"_knn_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
+        open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_knn_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
 
         
 
