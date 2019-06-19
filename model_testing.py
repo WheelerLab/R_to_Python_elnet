@@ -14,11 +14,16 @@ from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
 import time
 from scipy import stats
+import argparse
 
+parser = argparse.ArgumentParser()
+parser.add_argument("chr", action="store", help="put chromosome no")
+args = parser.parse_args() #22
+chrom = args.chr
+pop = "HIS"
 
 #time the whole script per chromosome
-chrom = 22
-pop = "CAU"
+
 #open("/home/paul/mesa_models/python_ml_models/whole_script_chr"+str(chrom)+"_timer.txt", "w").write("Chrom"+"\t"+"Time(s)"+"\n")
 #t0 = time.time()
 
@@ -126,10 +131,10 @@ geneanotfile = "/home/paul/mesa_models/gencode.v18.annotation.parsed.txt"
 snpfilepath = "/home/paul/mesa_models/AFA_"+str(chrom)+"_annot.txt"
 
 #test data files
-test_snp = "/home/paul/mesa_models/cau/CAU_"+str(chrom)+"_snp.txt"
-test_gex = "/home/paul/mesa_models/meqtl_sorted_CAU_MESA_Epi_GEX_data_sidno_Nk-10.txt"
-test_covfile = "/home/paul/mesa_models/cau/CAU_3_PCs.txt"
-test_snpfile = "/home/paul/mesa_models/cau/CAU_"+str(chrom)+"_annot.txt"
+test_snp = "/home/paul/mesa_models/his/HIS_"+str(chrom)+"_snp.txt"
+test_gex = "/home/paul/mesa_models/meqtl_sorted_HIS_MESA_Epi_GEX_data_sidno_Nk-10.txt"
+test_covfile = "/home/paul/mesa_models/his/HIS_3_PCs.txt"
+test_snpfile = "/home/paul/mesa_models/his/HIS_"+str(chrom)+"_annot.txt"
 
 #train functioning
 snpannot = get_filtered_snp_annot(snpfilepath)
