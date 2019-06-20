@@ -129,6 +129,7 @@ def snps_intersect(list1, list2):
 
 #chrom = 21 #chromosome number. #this is removed. and initialized early at the top
 
+#train data file
 afa_snp = "/home/paul/mesa_models/AFA_"+str(chrom)+"_snp.txt"
 gex = "/home/paul/mesa_models/meqtl_sorted_AFA_MESA_Epi_GEX_data_sidno_Nk-10.txt"
 cov_file = "/home/paul/mesa_models/AFA_3_PCs.txt"
