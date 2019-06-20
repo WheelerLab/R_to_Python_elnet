@@ -46,6 +46,11 @@ def get_gene_type (gene_anot, gene):
      gene_type = gene_type.iloc[0,5]
      return gene_type
 
+def get_gene_name (gene_anot, gene):
+     gene_name = gene_anot[gene_anot["gene_id"]==gene]
+     gene_name = gene_name.iloc[0,2]
+     return gene_name
+
 def get_gene_coords (gene_anot, gene):
      gene_type = gene_anot[gene_anot["gene_id"]==gene]
      gene_coord = [gene_type.iloc[0,3], gene_type.iloc[0,4]]
@@ -140,6 +145,13 @@ gencodev28 = "/home/paul/METS_model/hg19/gencode.v28_annotation.parsed.txt"
 #train functioning
 snpannot = get_filtered_snp_annot(snpfilepath)
 geneannot = get_gene_annotation(geneanotfile, chrom)
+annot_geneid = geneannot["gene_id"]#remove decimal from gene_id
+annot_geneid = list(annot_geneid)
+agid = []
+for i in annot_geneid:
+	agid.append(i[0:(i.find("."))])
+geneannot["gene_id"] = agid #replace with non decimal gene_id
+
 cov = get_covariates(cov_file)
 expr_df = get_gene_expression(gex, geneannot)
 genes = list(expr_df.columns)
@@ -154,6 +166,13 @@ genes = list(expr_df.columns) #take out the new non decimal gene_id
 #test functioning
 test_snpannot = get_filtered_snp_annot(test_snpfile)
 test_geneannot = get_gene_annotation(gencodev28, chrom)
+test_annot_geneid = test_geneannot["gene_id"]#remove decimal from gene_id
+test_annot_geneid = list(test_annot_geneid)
+test_agid = []
+for i in test_annot_geneid:
+	test_agid.append(i[0:(i.find("."))])
+test_geneannot["gene_id"] = test_agid #replace with non decimal gene_id
+
 test_cov = get_covariates(test_covfile)
 test_expr_df = get_gene_expression(test_gex, test_geneannot)
 test_genes = list(test_expr_df.columns)
@@ -181,14 +200,16 @@ knn = KNeighborsRegressor(n_neighbors=10, weights = "distance")
 #models = [rf,svrl,svr,knn]
 
 #text file where to write out the cv and test results
-open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_rf_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
-open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_knn_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
-open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_svr_linear_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
-open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_svr_rbf_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
+open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_rf_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
+open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_knn_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
+open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_svr_linear_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
+open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_svr_rbf_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
 
 for gene in genes:
     if gene in test_genes:
         coords = get_gene_coords(geneannot, gene)
+        test_coords = get_gene_coords(test_geneannot, gene)
+        gene_name = get_gene_name(geneannot, gene) #since the gene name is same across genecode annotation, we can use either of the genecode version
         #print(gene)
         expr_vec = expr_df[gene]#observed exp
         test_expr_vec = test_expr_df[gene]#observed exp
@@ -199,7 +220,7 @@ for gene in genes:
         #expr_vec = expr_df[gene]
         #adj_exp = adjust_for_covariates(expr_vec, cov)
         cis_gt = get_cis_genotype(gt_df, snpannot, coords)
-        test_cis_gt = get_cis_genotype(test_gt_df, test_snpannot, coords)
+        test_cis_gt = get_cis_genotype(test_gt_df, test_snpannot, test_coords)
         gg = [gene] #just to cast the gene id to list because pandas need it to be in list before it can be used as col name
 
         #take the snps
@@ -250,7 +271,7 @@ for gene in genes:
         sd = stats.spearmanr(test_yobs, ypred)
         sdcoef = str(float(sd[0]))
         sdpval = str(float(sd[1]))
-        open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_rf_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
+        open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_rf_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
 
         #SVR Linear
         #svrl_t0 = time.time()#time it
@@ -279,7 +300,7 @@ for gene in genes:
         sd = stats.spearmanr(test_yobs, ypred)
         sdcoef = str(float(sd[0]))
         sdpval = str(float(sd[1]))
-        open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_svr_linear_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
+        open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_svr_linear_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
         
         #SVR RBF
         #svr_t0 = time.time()#time it
@@ -308,7 +329,7 @@ for gene in genes:
         sd = stats.spearmanr(test_yobs, ypred)
         sdcoef = str(float(sd[0]))
         sdpval = str(float(sd[1]))
-        open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_svr_rbf_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
+        open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_svr_rbf_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
 
         #KNN
         #knn_t0 = time.time()#time it
@@ -337,7 +358,7 @@ for gene in genes:
         sd = stats.spearmanr(test_yobs, ypred)
         sdcoef = str(float(sd[0]))
         sdpval = str(float(sd[1]))
-        open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_knn_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
+        open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_knn_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
 
         
 

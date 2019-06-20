@@ -39,6 +39,11 @@ def get_gene_type (gene_anot, gene):
      gene_type = gene_type.iloc[0,5]
      return gene_type
 
+def get_gene_name (gene_anot, gene):
+     gene_name = gene_anot[gene_anot["gene_id"]==gene]
+     gene_name = gene_name.iloc[0,2]
+     return gene_name
+
 def get_gene_coords (gene_anot, gene):
      gene_type = gene_anot[gene_anot["gene_id"]==gene]
      gene_coord = [gene_type.iloc[0,3], gene_type.iloc[0,4]]
@@ -139,13 +144,14 @@ knn = KNeighborsRegressor(n_neighbors=10, weights = "distance")
 #models = [rf,svrl,svr,knn]
 
 #text file where to write out the cv results
-open("/home/paul/mesa_models/python_ml_models/results/rf_cv_chr"+str(chrom)+".txt", "w").write("Gene_ID"+"\t"+"CV_R2"+"\t"+"time(s)"+"\n")
-open("/home/paul/mesa_models/python_ml_models/results/knn_cv_chr"+str(chrom)+".txt", "w").write("Gene_ID"+"\t"+"CV_R2"+"\t"+"time(s)"+"\n")
-open("/home/paul/mesa_models/python_ml_models/results/svr_linear_cv_chr"+str(chrom)+".txt", "w").write("Gene_ID"+"\t"+"CV_R2"+"\t"+"time(s)"+"\n")
-open("/home/paul/mesa_models/python_ml_models/results/svr_rbf_cv_chr"+str(chrom)+".txt", "w").write("Gene_ID"+"\t"+"CV_R2"+"\t"+"time(s)"+"\n")
+open("/home/paul/mesa_models/python_ml_models/results/rf_cv_chr"+str(chrom)+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"time(s)"+"\n")
+open("/home/paul/mesa_models/python_ml_models/results/knn_cv_chr"+str(chrom)+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"time(s)"+"\n")
+open("/home/paul/mesa_models/python_ml_models/results/svr_linear_cv_chr"+str(chrom)+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"time(s)"+"\n")
+open("/home/paul/mesa_models/python_ml_models/results/svr_rbf_cv_chr"+str(chrom)+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"time(s)"+"\n")
 
 for gene in genes:
     coords = get_gene_coords(geneannot, gene)
+    gene_name = get_gene_name(geneannot, gene)
     #print(gene)
     expr_vec = expr_df[gene]
     #print(expr_vec)
@@ -163,25 +169,25 @@ for gene in genes:
     rf_cv = str(float(mean(cross_val_score(rf, cis_gt, adj_exp.ravel(), cv=5))))
     rf_t1 = time.time()
     rf_tt = str(float(rf_t1 - rf_t0))
-    open("/home/paul/mesa_models/python_ml_models/results/rf_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+rf_cv+"\t"+rf_tt+"\n")
+    open("/home/paul/mesa_models/python_ml_models/results/rf_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+rf_cv+"\t"+rf_tt+"\n")
     #SVR Linear
     svrl_t0 = time.time()#time it
     svrl_cv = str(float(mean(cross_val_score(svrl, cis_gt, adj_exp.ravel(), cv=5))))
     svrl_t1 = time.time()
     svrl_tt = str(float(svrl_t1 - svrl_t0))
-    open("/home/paul/mesa_models/python_ml_models/results/svr_linear_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+svrl_cv+"\t"+svrl_tt+"\n")
+    open("/home/paul/mesa_models/python_ml_models/results/svr_linear_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+svrl_cv+"\t"+svrl_tt+"\n")
     #SVR RBF
     svr_t0 = time.time()#time it
     svr_cv = str(float(mean(cross_val_score(svr, cis_gt, adj_exp.ravel(), cv=5))))
     svr_t1 = time.time()
     svr_tt = str(float(svr_t1 - svr_t0))
-    open("/home/paul/mesa_models/python_ml_models/results/svr_rbf_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+svr_cv+"\t"+svr_tt+"\n")
+    open("/home/paul/mesa_models/python_ml_models/results/svr_rbf_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+svr_cv+"\t"+svr_tt+"\n")
     #KNN
     knn_t0 = time.time()#time it
     knn_cv = str(float(mean(cross_val_score(knn, cis_gt, adj_exp.ravel(), cv=5))))
     knn_t1 = time.time()
     knn_tt = str(float(knn_t1 - knn_t0))
-    open("/home/paul/mesa_models/python_ml_models/results/knn_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+knn_cv+"\t"+knn_tt+"\n")
+    open("/home/paul/mesa_models/python_ml_models/results/knn_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+knn_cv+"\t"+knn_tt+"\n")
     
 
 t1 = time.time()

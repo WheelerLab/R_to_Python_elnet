@@ -201,6 +201,10 @@ def get_gene_type (gene_anot, gene):
      gene_type = gene_type.iloc[0,5]
      return gene_type
 
+def get_gene_name (gene_anot, gene):
+     gene_name = gene_anot[gene_anot["gene_id"]==gene]
+     gene_name = gene_name.iloc[0,2]
+     return gene_name
 
 # gene has to be string
 def get_gene_coords (gene_anot, gene):
