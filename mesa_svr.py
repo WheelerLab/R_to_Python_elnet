@@ -290,3 +290,14 @@ def do_covariance (gene_id, cis_gt, rsids, varIDs): #working on this but have no
   geno_cov = model_gt.values
   geno_cov = np.cov(geno_cov) #you can join to do, but i will pause here.
 """
+cour = [[70,90,80],
+	    [60,90,70],
+	    [40,55,50],
+	    [60,40,50],
+	    [70,70,75],
+	    [70,50,40],
+	    [30,40,39],
+	    [50,40,45],
+	    [60,40,45],
+	    [35,40,50]]
+iq = [90, 92, 65, 50, 86, 61, 40, 45, 50, 49]
