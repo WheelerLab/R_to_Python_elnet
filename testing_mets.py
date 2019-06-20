@@ -91,7 +91,7 @@ def get_maf_filtered_genotype(genotype_file_name,  maf):
 def get_cis_genotype (gt_df, snp_annot, coords, cis_window=1000000):
       snp_info = snpannot[(snpannot['pos'] >= (coords[0] - cis_window)) & (snpannot['rsid'].notna()) & (snpannot['pos'] <= (coords[1] + cis_window))]
       if len(snp_info) == 0:
-          return None
+          return 0
       else:
            gtdf_col = list(gt_df.columns)
            snpinfo_col = list(snp_info["varID"])
@@ -226,7 +226,7 @@ for gene in genes:
         #adj_exp = adjust_for_covariates(expr_vec, cov)
         cis_gt = get_cis_genotype(gt_df, snpannot, coords)
         test_cis_gt = get_cis_genotype(test_gt_df, test_snpannot, test_coords)
-        if (cis_gt != None) & (test_cis_gt != None):
+        if (type(cis_gt) != int) & (type(test_cis_gt) != int): #just to be sure the cis genotype is not empty
              
              gg = [gene] #just to cast the gene id to list because pandas need it to be in list before it can be used as col name
 
