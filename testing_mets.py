@@ -10,7 +10,7 @@ from sklearn.preprocessing import scale
 from pandas import DataFrame
 import pickle
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.svm import SVR
+#from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
 import time
 from scipy import stats
@@ -146,6 +146,7 @@ gencodev28 = "/home/paul/METS_model/hg19/gencode.v28_annotation.parsed.txt"
 #train functioning
 snpannot = get_filtered_snp_annot(snpfilepath)
 geneannot = get_gene_annotation(geneanotfile, chrom)
+expr_df = get_gene_expression(gex, geneannot) #this had to created early to avoid empty df downstream
 annot_geneid = geneannot["gene_id"]#remove decimal from gene_id
 annot_geneid = list(annot_geneid)
 agid = []
@@ -154,7 +155,7 @@ for i in annot_geneid:
 geneannot["gene_id"] = agid #replace with non decimal gene_id
 
 cov = get_covariates(cov_file)
-expr_df = get_gene_expression(gex, geneannot)
+
 genes = list(expr_df.columns)
 gt_df = get_maf_filtered_genotype(afa_snp, 0.01)
 train_ids = list(gt_df.index)
@@ -167,6 +168,7 @@ genes = list(expr_df.columns) #take out the new non decimal gene_id
 #test functioning
 test_snpannot = get_filtered_snp_annot(test_snpfile)
 test_geneannot = get_gene_annotation(gencodev28, chrom)
+test_expr_df = get_gene_expression(test_gex, test_geneannot) #important to create early
 test_annot_geneid = test_geneannot["gene_id"]#remove decimal from gene_id
 test_annot_geneid = list(test_annot_geneid)
 test_agid = []
@@ -175,7 +177,7 @@ for i in test_annot_geneid:
 test_geneannot["gene_id"] = test_agid #replace with non decimal gene_id
 
 test_cov = get_covariates(test_covfile)
-test_expr_df = get_gene_expression(test_gex, test_geneannot)
+
 test_genes = list(test_expr_df.columns)
 test_gt_df = get_maf_filtered_genotype(test_snp, 0.01)
 test_ids = list(test_gt_df.index)
@@ -208,6 +210,7 @@ open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_svr_rbf_cor_
 
 for gene in genes:
     if gene in test_genes:
+
         coords = get_gene_coords(geneannot, gene)
         test_coords = get_gene_coords(test_geneannot, gene)
         gene_name = get_gene_name(geneannot, gene) #since the gene name is same across genecode annotation, we can use either of the genecode version
