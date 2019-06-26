@@ -111,7 +111,7 @@ def calc_R2 (y, y_pred):
     return r2
 
 
-def calc_corr (y, y_pred):
+def calc_corr (y, y_pred): #pearson corr
     num = 0
     dem1 = 0
     dem2 = 0
