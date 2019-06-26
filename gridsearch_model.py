@@ -156,7 +156,7 @@ rfgs = GridSearchCV(rf, rf_grid, cv=5, iid=False, scoring=r2)
 
 svr = SVR(gamma="scale")
 kernel = ["linear", "poly", "rbf", "sigmoid"]
-degree = [2, 3, 4, 5]
+degree = [2, 3, 4, 5, 6, 7]
 C = [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 1.5]
 svr_grid = {"kernel": kernel,
             "degree": degree, "C": C}
