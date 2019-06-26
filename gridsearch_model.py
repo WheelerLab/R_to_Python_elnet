@@ -185,7 +185,7 @@ for gene in genes:
 
     #build the model
     
-    if (type(cis_gt) != int) & (cis_gt.shape[1]) > 0):
+    if (type(cis_gt) != int) & (cis_gt.shape[1] > 0):
          
 
          cis_gt = cis_gt.values

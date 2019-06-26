@@ -84,12 +84,13 @@ def get_maf_filtered_genotype(genotype_file_name,  maf):
 def get_cis_genotype (gt_df, snp_annot, coords, cis_window=1000000):
       snp_info = snpannot[(snpannot['pos'] >= (coords[0] - cis_window)) & (snpannot['rsid'].notna()) & (snpannot['pos'] <= (coords[1] + cis_window))]
       if len(snp_info) == 0:
-          return NaN
-      gtdf_col = list(gt_df.columns)
-      snpinfo_col = list(snp_info["varID"])
-      intersect = snps_intersect(gtdf_col, snpinfo_col) #this function was defined earlier
-      cis_gt = gt_df[intersect]
-      return cis_gt
+          return 0
+      else:
+           gtdf_col = list(gt_df.columns)
+           snpinfo_col = list(snp_info["varID"])
+           intersect = snps_intersect(gtdf_col, snpinfo_col) #this function was defined earlier
+           cis_gt = gt_df[intersect]
+           return cis_gt
 
 def calc_R2 (y, y_pred):
     tss = 0
@@ -162,33 +163,36 @@ for gene in genes:
     cis_gt = get_cis_genotype(gt_df, snpannot, coords)
     #build the model
     #adj_exp = adj_exp.values #not needed after making adj_exp a numpy array above
-    cis_gt = cis_gt.values
-    #these steps can be shortened with a loop where the models are in a list or dictionary
-    #Random Forest
-    rf_t0 = time.time()#do rf and time it
-    rf_cv = str(float(mean(cross_val_score(rf, cis_gt, adj_exp.ravel(), cv=5))))
-    rf_t1 = time.time()
-    rf_tt = str(float(rf_t1 - rf_t0))
-    open("/home/paul/mesa_models/python_ml_models/results/rf_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+rf_cv+"\t"+rf_tt+"\n")
-    #SVR Linear
-    svrl_t0 = time.time()#time it
-    svrl_cv = str(float(mean(cross_val_score(svrl, cis_gt, adj_exp.ravel(), cv=5))))
-    svrl_t1 = time.time()
-    svrl_tt = str(float(svrl_t1 - svrl_t0))
-    open("/home/paul/mesa_models/python_ml_models/results/svr_linear_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+svrl_cv+"\t"+svrl_tt+"\n")
-    #SVR RBF
-    svr_t0 = time.time()#time it
-    svr_cv = str(float(mean(cross_val_score(svr, cis_gt, adj_exp.ravel(), cv=5))))
-    svr_t1 = time.time()
-    svr_tt = str(float(svr_t1 - svr_t0))
-    open("/home/paul/mesa_models/python_ml_models/results/svr_rbf_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+svr_cv+"\t"+svr_tt+"\n")
-    #KNN
-    knn_t0 = time.time()#time it
-    knn_cv = str(float(mean(cross_val_score(knn, cis_gt, adj_exp.ravel(), cv=5))))
-    knn_t1 = time.time()
-    knn_tt = str(float(knn_t1 - knn_t0))
-    open("/home/paul/mesa_models/python_ml_models/results/knn_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+knn_cv+"\t"+knn_tt+"\n")
-    
+    if (type(cis_gt) != int) & (cis_gt.shape[1]) > 0):
+         
+
+         cis_gt = cis_gt.values
+         #these steps can be shortened with a loop where the models are in a list or dictionary
+         #Random Forest
+         rf_t0 = time.time()#do rf and time it
+         rf_cv = str(float(mean(cross_val_score(rf, cis_gt, adj_exp.ravel(), cv=5))))
+         rf_t1 = time.time()
+         rf_tt = str(float(rf_t1 - rf_t0))
+         open("/home/paul/mesa_models/python_ml_models/results/rf_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+rf_cv+"\t"+rf_tt+"\n")
+         #SVR Linear
+         svrl_t0 = time.time()#time it
+         svrl_cv = str(float(mean(cross_val_score(svrl, cis_gt, adj_exp.ravel(), cv=5))))
+         svrl_t1 = time.time()
+         svrl_tt = str(float(svrl_t1 - svrl_t0))
+         open("/home/paul/mesa_models/python_ml_models/results/svr_linear_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+svrl_cv+"\t"+svrl_tt+"\n")
+         #SVR RBF
+         svr_t0 = time.time()#time it
+         svr_cv = str(float(mean(cross_val_score(svr, cis_gt, adj_exp.ravel(), cv=5))))
+         svr_t1 = time.time()
+         svr_tt = str(float(svr_t1 - svr_t0))
+         open("/home/paul/mesa_models/python_ml_models/results/svr_rbf_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+svr_cv+"\t"+svr_tt+"\n")
+         #KNN
+         knn_t0 = time.time()#time it
+         knn_cv = str(float(mean(cross_val_score(knn, cis_gt, adj_exp.ravel(), cv=5))))
+         knn_t1 = time.time()
+         knn_tt = str(float(knn_t1 - knn_t0))
+         open("/home/paul/mesa_models/python_ml_models/results/knn_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+knn_cv+"\t"+knn_tt+"\n")
+         
 
 t1 = time.time()
 total = str(float(t1-t0))
