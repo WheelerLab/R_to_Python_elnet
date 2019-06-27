@@ -305,3 +305,8 @@ cour = [[70,90,80],
 	    [60,40,45],
 	    [35,40,50]]
 iq = [90, 92, 65, 50, 86, 61, 40, 45, 50, 49]
+
+#trying to do the covariance
+sv = list(snpannot["varID"])
+varid = snps_intersect(cc,sv)
+sn = snpannot[(snpannot.varID.isin(varid))]

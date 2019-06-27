@@ -1,6 +1,5 @@
 import numpy as np
 from sklearn.svm import SVR
-#from sklearn.model_selection import train_test_split
 import pandas as pd
 from sklearn.model_selection import cross_val_score
 from statistics import mean
@@ -10,7 +9,6 @@ from sklearn.preprocessing import scale
 from pandas import DataFrame
 import pickle
 from sklearn.ensemble import RandomForestRegressor
-#from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
 import time
 from scipy import stats
@@ -150,20 +148,20 @@ gt_df = get_maf_filtered_genotype(afa_snp, 0.01)
 
 #algorithms to use
 rf = RandomForestRegressor()
-n_estimators = [int(i) for i in range(50,301,50)]
+n_estimators = [int(i) for i in range(50,501,50)]
 rf_grid = {"n_estimators": n_estimators}
 rfgs = GridSearchCV(rf, rf_grid, cv=5, iid=False, scoring=r2)
 
 svr = SVR(gamma="scale")
 kernel = ["linear", "poly", "rbf", "sigmoid"]
 degree = [2, 3, 4, 5, 6, 7]
-C = [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 1.5]
+C = [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 1.5, 2.0]
 svr_grid = {"kernel": kernel,
             "degree": degree, "C": C}
 svrgs = GridSearchCV(svr, svr_grid, cv=5, iid=False, scoring=r2)
 
 knn = KNeighborsRegressor()
-n_neighbors = [3, 5, 7, 9, 11, 13, 15, 17, 19, 21]
+n_neighbors = [3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31]
 weights = ["uniform", "distance"]
 p = [1, 2, 3]
 knn_grid = {"n_neighbors": n_neighbors,
@@ -195,7 +193,7 @@ for gene in genes:
          rfgs.fit(cis_gt, adj_exp.ravel())
          rf_cv = str(rfgs.best_score_)
          n = str(rfgs.best_params_["n_estimators"])
-         open("/home/paul/mesa_models/python_ml_models/results/grid_rf_cv_chr"+chrom+".txt", "w").write(gene+"\t"+gene_name+"\t"+rf_cv+"\t"+n+"\n")
+         open("/home/paul/mesa_models/python_ml_models/results/grid_rf_cv_chr"+chrom+".txt", "a").write(gene+"\t"+gene_name+"\t"+rf_cv+"\t"+n+"\n")
          
          #SVR
          svrgs.fit(cis_gt, adj_exp.ravel())
@@ -203,7 +201,7 @@ for gene in genes:
          svr_kernel = str(svrgs.best_params_["kernel"])
          svr_degree = str(svrgs.best_params_["degree"])
          svr_c = str(svrgs.best_params_["C"])
-         open("/home/paul/mesa_models/python_ml_models/results/grid_svr_cv_chr"+chrom+".txt", "w").write(gene+"\t"+gene_name+"\t"+svr_cv+"\t"+svr_kernel+"\t"+svr_degree+"\t"+svr_c+"\n")
+         open("/home/paul/mesa_models/python_ml_models/results/grid_svr_cv_chr"+chrom+".txt", "a").write(gene+"\t"+gene_name+"\t"+svr_cv+"\t"+svr_kernel+"\t"+svr_degree+"\t"+svr_c+"\n")
 
          #KNN
          knngs.fit(cis_gt, adj_exp.ravel())
@@ -211,6 +209,6 @@ for gene in genes:
          knn_n = str(knngs.best_params_["n_neighbors"])
          knn_w = str(knngs.best_params_["weights"])
          knn_p = str(knngs.best_params_["p"])
-         open("/home/paul/mesa_models/python_ml_models/results/grid_knn_cv_chr"+chrom+".txt", "w").write(gene+"\t"+gene_name+"\t"+knn_cv+"\t"+knn_n+"\t"+knn_w+"\t"+knn_p+"\n")
+         open("/home/paul/mesa_models/python_ml_models/results/grid_knn_cv_chr"+chrom+".txt", "a").write(gene+"\t"+gene_name+"\t"+knn_cv+"\t"+knn_n+"\t"+knn_w+"\t"+knn_p+"\n")
          
 
