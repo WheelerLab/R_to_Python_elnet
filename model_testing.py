@@ -22,7 +22,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("chr", action="store", help="put chromosome no")
 args = parser.parse_args() #22
 chrom = args.chr
-pop = "HIS"
+pop = "AFA"
 
 #time the whole script per chromosome
 
@@ -140,10 +140,10 @@ geneanotfile = "/home/paul/mesa_models/gencode.v18.annotation.parsed.txt"
 snpfilepath = "/home/paul/mesa_models/AFA_"+str(chrom)+"_annot.txt"
 
 #test data files
-test_snp = "/home/paul/mesa_models/his/HIS_"+str(chrom)+"_snp.txt"
-test_gex = "/home/paul/mesa_models/meqtl_sorted_HIS_MESA_Epi_GEX_data_sidno_Nk-10.txt"
-test_covfile = "/home/paul/mesa_models/his/HIS_3_PCs.txt"
-test_snpfile = "/home/paul/mesa_models/his/HIS_"+str(chrom)+"_annot.txt"
+#test_snp = "/home/paul/mesa_models/his/HIS_"+str(chrom)+"_snp.txt"
+#test_gex = "/home/paul/mesa_models/meqtl_sorted_HIS_MESA_Epi_GEX_data_sidno_Nk-10.txt"
+#test_covfile = "/home/paul/mesa_models/his/HIS_3_PCs.txt"
+#test_snpfile = "/home/paul/mesa_models/his/HIS_"+str(chrom)+"_annot.txt"
 
 #train functioning
 snpannot = get_filtered_snp_annot(snpfilepath)
@@ -154,6 +154,9 @@ genes = list(expr_df.columns)
 gt_df = get_maf_filtered_genotype(afa_snp, 0.01)
 train_ids = list(gt_df.index)
 
+adj_exp_frame = pd.DataFrame()
+
+"""
 #test functioning
 test_snpannot = get_filtered_snp_annot(test_snpfile)
 test_cov = get_covariates(test_covfile)
@@ -185,9 +188,22 @@ elnet = ElasticNet(alpha=0.1, random_state=1234)
 #open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_svr_linear_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
 #open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_svr_rbf_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
 
-open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_elnet_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
+#open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_elnet_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
+"""
 
 for gene in genes:
+     #prepare test_adj_exp for writing out to a file
+     gg = [gene] #just to cast the gene id to list because pandas need it to be in list before it can be used as col name
+     coords = get_gene_coords(geneannot, gene)
+     expr_vec = expr_df[gene]#observed exp
+     adj_exp = adjust_for_covariates(list(expr_vec), cov)#adjusted exp
+     
+     adj_exp_pd = pd.DataFrame(adj_exp)
+     adj_exp_pd.columns = gg
+     adj_exp_pd.index = train_ids
+     adj_exp_frame = pd.concat([adj_exp_frame, adj_exp_pd], axis=1, sort=True)
+
+"""     
     if gene in test_genes:
         coords = get_gene_coords(geneannot, gene)
         gene_name = get_gene_name(geneannot, gene)
@@ -197,6 +213,7 @@ for gene in genes:
         #print(expr_vec)
         adj_exp = adjust_for_covariates(list(expr_vec), cov)#adjusted exp
         test_adj_exp = adjust_for_covariates(list(test_expr_vec), test_cov)#adjusted exp
+        
         #break
         #expr_vec = expr_df[gene]
         #adj_exp = adjust_for_covariates(expr_vec, cov)
@@ -261,7 +278,7 @@ for gene in genes:
                   open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_elnet_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
 
 
-"""
+
                   
                   rf.fit(cis_gt, adj_exp.ravel())
                   ypred = rf.predict(test_cis_gt)
@@ -381,8 +398,9 @@ ypred_frame_svrl.to_csv("/home/paul/mesa_models/python_ml_models/results/AFA_2_"
 ypred_frame_svr.to_csv("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_svr_rbf_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
 ypred_frame_knn.to_csv("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_knn_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
 test_adj_exp_frame.to_csv("/home/paul/mesa_models/python_ml_models/results/"+pop+"_pc_adjusted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
-"""
 ypred_frame_elnet.to_csv("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_elnet_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
+"""
+adj_exp_frame.to_csv("/home/paul/mesa_models/python_ml_models/results/"+pop+"_pc_adjusted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
 #t1 = time.time()
 #total = str(float(t1-t0))
 #open("/home/paul/mesa_models/python_ml_models/whole_script_chr"+str(chrom)+"_timer.txt", "a").write(str(chrom)+"\t"+total+"\n")

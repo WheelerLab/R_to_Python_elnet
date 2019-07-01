@@ -150,7 +150,9 @@ gt_df = get_maf_filtered_genotype(afa_snp, 0.01)
 rf = RandomForestRegressor()
 n_estimators = [int(i) for i in range(50,501,50)]
 rf_grid = {"n_estimators": n_estimators}
-rfgs = GridSearchCV(rf, rf_grid, cv=5, iid=False, scoring=r2)
+rfgs = GridSearchCV(rf, rf_grid, cv=5, iid=False, scoring=r2,
+                    return_train_score=False)
+rf_table = pd.DataFrame()
 
 svr = SVR(gamma="scale")
 kernel = ["linear", "poly", "rbf", "sigmoid"]
@@ -158,7 +160,9 @@ degree = [2, 3, 4, 5, 6, 7]
 C = [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 1.5, 2.0]
 svr_grid = {"kernel": kernel,
             "degree": degree, "C": C}
-svrgs = GridSearchCV(svr, svr_grid, cv=5, iid=False, scoring=r2)
+svrgs = GridSearchCV(svr, svr_grid, cv=5, iid=False, scoring=r2,
+                     return_train_score=False)
+svr_table = pd.DataFrame()
 
 knn = KNeighborsRegressor()
 n_neighbors = [3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31]
@@ -166,12 +170,14 @@ weights = ["uniform", "distance"]
 p = [1, 2, 3]
 knn_grid = {"n_neighbors": n_neighbors,
             "weights": weights, "p": p}
-knngs = GridSearchCV(knn, knn_grid, cv=5, iid=False, scoring=r2)
+knngs = GridSearchCV(knn, knn_grid, cv=5, iid=False, scoring=r2,
+                     return_train_score=False)
+knn_table = pd.DataFrame()
 
 #text file where to write out the cv results
-open("/home/paul/mesa_models/python_ml_models/results/grid_rf_cv_chr"+chrom+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"n_estimators"+"\n")
-open("/home/paul/mesa_models/python_ml_models/results/grid_knn_cv_chr"+chrom+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"n_neigbors"+"\t"+"weights"+"\t"+"p"+"\n")
-open("/home/paul/mesa_models/python_ml_models/results/grid_svr_cv_chr"+chrom+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"kernel"+"\t"+"degree"+"\t"+"C"+"\n")
+open("/home/paul/mesa_models/python_ml_models/results/best_grid_rf_cv_chr"+chrom+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"n_estimators"+"\t"+"time(s)"+"\n")
+open("/home/paul/mesa_models/python_ml_models/results/best_grid_knn_cv_chr"+chrom+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"n_neigbors"+"\t"+"weights"+"\t"+"p"+"\t"+"time(s)"+"\n")
+open("/home/paul/mesa_models/python_ml_models/results/best_grid_svr_cv_chr"+chrom+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"kernel"+"\t"+"degree"+"\t"+"C"+"\t"+"time(s)"+"\n")
 
 for gene in genes:
     coords = get_gene_coords(geneannot, gene)
@@ -189,26 +195,60 @@ for gene in genes:
          cis_gt = cis_gt.values
          
          #Random Forest
-         
+         rf_t0 = time.time()#do rf and time it
          rfgs.fit(cis_gt, adj_exp.ravel())
+         rf_t1 = time.time()
+         rf_tt = str(float(rf_t1 - rf_t0))
          rf_cv = str(rfgs.best_score_)
          n = str(rfgs.best_params_["n_estimators"])
-         open("/home/paul/mesa_models/python_ml_models/results/grid_rf_cv_chr"+chrom+".txt", "a").write(gene+"\t"+gene_name+"\t"+rf_cv+"\t"+n+"\n")
+         open("/home/paul/mesa_models/python_ml_models/results/best_grid_rf_cv_chr"+chrom+".txt", "a").write(gene+"\t"+gene_name+"\t"+rf_cv+"\t"+n+"\t"+rf_tt+"\n")
+
+         #extract mean R2 score per gene per parameter
+         cv = pd.DataFrame(rfgs.cv_results_)
+         param = list(cv.param_n_estimators)
+         mscore = pd.DataFrame(list(cv.mean_test_score))
+         mscore.columns = [gene]
+         mscore.index = param
+         rf_table = pd.concat([rf_table, mscore], axis=1, sort=True)
          
          #SVR
+         svr_t0 = time.time()
          svrgs.fit(cis_gt, adj_exp.ravel())
+         svr_t1 = time.time()
+         svr_tt = str(float(svr_t1 - svr_t0))
          svr_cv = str(svrgs.best_score_)
          svr_kernel = str(svrgs.best_params_["kernel"])
          svr_degree = str(svrgs.best_params_["degree"])
          svr_c = str(svrgs.best_params_["C"])
-         open("/home/paul/mesa_models/python_ml_models/results/grid_svr_cv_chr"+chrom+".txt", "a").write(gene+"\t"+gene_name+"\t"+svr_cv+"\t"+svr_kernel+"\t"+svr_degree+"\t"+svr_c+"\n")
+         open("/home/paul/mesa_models/python_ml_models/results/best_grid_svr_cv_chr"+chrom+".txt", "a").write(gene+"\t"+gene_name+"\t"+svr_cv+"\t"+svr_kernel+"\t"+svr_degree+"\t"+svr_c+"\t"+svr_tt+"\n")
+
+         #extract mean R2 score per gene per parameter
+         cv = pd.DataFrame(svrgs.cv_results_)
+         param = list(cv.params)
+         mscore = pd.DataFrame(list(cv.mean_test_score))
+         mscore.columns = [gene]
+         mscore.index = param
+         svr_table = pd.concat([svr_table, mscore], axis=1, sort=True)
 
          #KNN
+         knn_t0 = time.time()
          knngs.fit(cis_gt, adj_exp.ravel())
+         knn_t1 = time.time()
+         knn_tt = str(float(knn_t1 - knn_t0))
          knn_cv = str(knngs.best_score_)
          knn_n = str(knngs.best_params_["n_neighbors"])
          knn_w = str(knngs.best_params_["weights"])
          knn_p = str(knngs.best_params_["p"])
-         open("/home/paul/mesa_models/python_ml_models/results/grid_knn_cv_chr"+chrom+".txt", "a").write(gene+"\t"+gene_name+"\t"+knn_cv+"\t"+knn_n+"\t"+knn_w+"\t"+knn_p+"\n")
-         
+         open("/home/paul/mesa_models/python_ml_models/results/best_grid_knn_cv_chr"+chrom+".txt", "a").write(gene+"\t"+gene_name+"\t"+knn_cv+"\t"+knn_n+"\t"+knn_w+"\t"+knn_p+"\t"+knn_tt+"\n")
 
+         #extract mean R2 score per gene per parameter
+         cv = pd.DataFrame(knngs.cv_results_)
+         param = list(cv.params)
+         mscore = pd.DataFrame(list(cv.mean_test_score))
+         mscore.columns = [gene]
+         mscore.index = param
+         knn_table = pd.concat([knn_table, mscore], axis=1, sort=True)
+         
+rf_table.to_csv("/home/paul/mesa_models/python_ml_models/results/"+pop+"rf_grid_parameter_per_gene_chr"+chrom+".txt", header=True, index=True, sep="\t")
+svr_table.to_csv("/home/paul/mesa_models/python_ml_models/results/"+pop+"svr_grid_parameter_per_gene_chr"+chrom+".txt", header=True, index=True, sep="\t")
+knn_table.to_csv("/home/paul/mesa_models/python_ml_models/results/"+pop+"knn_grid_parameter_per_gene_chr"+chrom+".txt", header=True, index=True, sep="\t")
