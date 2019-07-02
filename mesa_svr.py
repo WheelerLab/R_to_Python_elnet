@@ -361,10 +361,16 @@ for i in range(len(pos_beta)):
      alt.append(sna.iloc[0,2]) #take out snp effectAllele
 
 #use the lists for the covariance function
-def do_covariance(gene,cis_gt,rsid,varID):
+def do_covariance(gene,cis_gt,rsid,varID): #except gene_id, the arguments are list
      model_gt = cis_gt[varID]
      model_gt.columns = rsid
      gcov = np.cov(model_gt, rowvar=False) #If rowvar is True (default), then each row represents a variable, with observations in the columns. which is not true. so rowvar=False
+     gcov = pd.DataFrame(gcov)
+     gcov.columns = rsid
+     gcov.index = rsid
+     for i in range(len(gcov)): #Best looper for the covariance
+	for j in range(i, len(gcov)):
+		print(gene, gcov.index[i], gcov.columns[j], gcov.iloc[i,j])
 
 
 #OR
@@ -397,19 +403,48 @@ for i in range(len(pos_beta)):
      "a").write(gene+"\t"+rs+"\t"+va+"\t"+re+"\t"+al+"\t"+w+"\n")
 
 
+i = 0
+while i < len(gc): #wrong looper
+     for j in range(len(gc)):
+         print(gc.columns[i], gc.index[j-i], gc.iloc[j-i,i])
+     i+=1
+     
 
 
 
+#simulate the covariance file and try melt
+col1 = [3,4,7]
+col2 = [4,5,7]
+col2 = [4,5,6]
+col3 = [7,6,8]
+eg = pd.DataFrame({'rs01':col1, 'rs02':col2, 'rs03':col3})
+row = ['rs01', 'rs02', 'rs03']
+eg.index = row
+i=0
+while i < len(eg):#wrong looper
+     for j in range(len(eg)):
+         print(eg.index[i], eg.columns[j-i], eg.iloc[j-i,i])
+     i+=1
 
 
+i = 0
+j = 0
+k = 0
+while i < len(eg):#wrong looper
+     while k < len(eg):
+         print(eg.index[i], eg.columns[j-i], eg.iloc[j-i,i])
+         k+=1
+     i+=1
+     j = i+1
 
 
+for i in range(eg.shape[0]): #good too
+	for j in range(i, eg.shape[1]):
+		print(eg.index[i], eg.columns[j], eg.iloc[i,j])
 
-
-
-
-
-
+for i in range(len(eg)): #Best looper for the covariance
+	for j in range(i, len(eg)):
+		print(eg.index[i], eg.columns[j], eg.iloc[i,j])
 
 
 
