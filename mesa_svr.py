@@ -308,5 +308,94 @@ iq = [90, 92, 65, 50, 86, 61, 40, 45, 50, 49]
 
 #trying to do the covariance
 sv = list(snpannot["varID"])
-varid = snps_intersect(cc,sv)
+varid = snps_intersect(cc,sv) #cc is cis_gt columns
 sn = snpannot[(snpannot.varID.isin(varid))]
+
+#Elastic Net implementation equivalence in from R
+
+
+elnet = ElasticNet(alpha=0.1, random_state=1234)
+x = cis_gt.values
+y = adj_exp
+elnet.fit(x,y)
+beta = elnet.coef_ #read in the beta coefficients of the
+indices2 = np.where(beta > 0) #find the indices of the positive betas
+pos_beta = beta[indices2] #find the beta values themselves
+weighted_snps = cis_gt.columns[indices2] #find the snps with the positive betas
+
+#filter the snpannot by the weighted snps
+sn = snpannot[(snpannot.varID.isin(weighted_snps))]
+
+weighted_varID = list(sn.varID)
+weighted_rsid = list(sn.rsid)
+model_gt = cis_gt[weighted_varID]
+model_gt.columns = weighted_rsid
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

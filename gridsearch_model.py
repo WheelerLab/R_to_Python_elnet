@@ -147,7 +147,7 @@ genes = list(expr_df.columns)
 gt_df = get_maf_filtered_genotype(afa_snp, 0.01)
 
 #algorithms to use
-rf = RandomForestRegressor()
+rf = RandomForestRegressor(random_state=1234)
 n_estimators = [int(i) for i in range(50,501,50)]
 rf_grid = {"n_estimators": n_estimators}
 rfgs = GridSearchCV(rf, rf_grid, cv=5, iid=False, scoring=r2,
