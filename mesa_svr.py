@@ -326,20 +326,75 @@ weighted_snps = cis_gt.columns[indices2] #find the snps with the positive betas
 #filter the snpannot by the weighted snps
 sn = snpannot[(snpannot.varID.isin(weighted_snps))]
 
+#tyring to do covariance
 weighted_varID = list(sn.varID)
 weighted_rsid = list(sn.rsid)
 model_gt = cis_gt[weighted_varID]
 model_gt.columns = weighted_rsid
 
+#implement how the get the weight files for elastic net
+#columns are:
+#   gene_id rsid    varID   ref alt beta
+
+#use loop to write out the weights and access the snpannot info
+#first drop the chr and pos colums to minimize size to 4 columns
+#   varID   refAllele   effectAllele    rsid
+sn.drop(labels=['chr','pos'], axis='columns', inplace=True)
+
+#loop and keep everything in a sorted order
+#this can be use for the covariance function
+gene_id = []
+rsid = []
+varID = []
+ref = []
+alt = []
+weights = []
+
+for i in range(len(pos_beta)):
+     gene_id.append(gene)#add the gene_id
+     weights.append(pos_beta[i])#add the snp weight
+     snpid = weighted_snps[i]#take put snp id
+     sna = sn[sn.varID==snpid] #filter snp annot by snpid
+     rsid.append(sna.iloc[0,3]) #take out snp rsid
+     varID.append(sna.iloc[0,0]) #take out snp varID
+     ref.append(sna.iloc[0,1]) #take out snp refAllele
+     alt.append(sna.iloc[0,2]) #take out snp effectAllele
+
+#use the lists for the covariance function
+def do_covariance(gene,cis_gt,rsid,varID):
+     model_gt = cis_gt[varID]
+     model_gt.columns = rsid
+     gcov = np.cov(model_gt, rowvar=False) #If rowvar is True (default), then each row represents a variable, with observations in the columns. which is not true. so rowvar=False
 
 
+#OR
+#convert the lists to pandas dataframe
+#use numpy
+w_file = pd.DataFrame(np.column_stack([gene_id, rsid, varID, ref, alt, weights]), 
+                               columns=['gene_id', 'rsid', 'varID', 'ref', 'alt', 'beta'])     
+     
 
+#or use dictionary... however this truncates the decimal places
+w_file2 = pd.DataFrame({'gene_id':gene_id, 'rsid':rsid, 'varID':varID,
+                        'ref':ref, 'alt':alt, 'beta':weights})
+     
 
+#instead of puting the file in list..., write it out to file
+open("/Users/okoro/OneDrive/Desktop/weights.txt",
+     "w").write("gene_id"+"\t"+"rsid"+"\t"+"varID"+"\t"+"ref"+"\t"+"alt"+"\t"+"beta"+"\n")
 
-
-
-
-
+                
+for i in range(len(pos_beta)):
+     #add the gene_id
+     w = str(pos_beta[i])#add the snp weight
+     snpid = weighted_snps[i]#take put snp id
+     sna = sn[sn.varID==snpid] #filter snp annot by snpid
+     rs = str(sna.iloc[0,3]) #take out snp rsid
+     va = str(sna.iloc[0,0]) #take out snp varID
+     re = str(sna.iloc[0,1]) #take out snp refAllele
+     al = str(sna.iloc[0,2]) #take out snp effectAllele
+     open("/Users/okoro/OneDrive/Desktop/weights.txt",
+     "a").write(gene+"\t"+rs+"\t"+va+"\t"+re+"\t"+al+"\t"+w+"\n")
 
 
 
