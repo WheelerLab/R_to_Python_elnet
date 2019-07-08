@@ -30,6 +30,7 @@ parser.add_argument("chr", action="store", help="put chromosome no")
 args = parser.parse_args()
 chrom = args.chr
 chrom = str(chrom)
+pop = "AFA"
 
 #important functions needed
 def get_filtered_snp_annot (snpfilepath):
@@ -151,8 +152,15 @@ rf = RandomForestRegressor(random_state=1234)
 n_estimators = [int(i) for i in range(50,501,50)]
 rf_grid = {"n_estimators": n_estimators}
 rfgs = GridSearchCV(rf, rf_grid, cv=5, iid=False, scoring=r2,
-                    return_train_score=False)
-rf_table = pd.DataFrame()
+                    return_train_score=False, refit=False)
+#rf_table = pd.DataFrame()
+#write out the column header
+open("/home/paul/mesa_models/python_ml_models/results/"+pop+"_rf_grid_chr"+chrom+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"chr"+"\t")
+for i in n_estimators:
+     open("/home/paul/mesa_models/python_ml_models/results/"+pop+"_rf_grid_chr"+chrom+".txt", "a").write(str(i)+"\t")
+
+#second table file for writing out all grid search results
+open("/home/paul/mesa_models/python_ml_models/results/"+pop+"_rf_grid_parameter_per_gene_chr"+chrom+".txt", "w").write("parameters"+"\t"+"gene_id"+"\t"+"gene_name"+"\t"+"chr"+"\t"+"avg_cv_R2")
 
 svr = SVR(gamma="scale")
 kernel = ["linear", "poly", "rbf", "sigmoid"]
@@ -161,8 +169,10 @@ C = [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 1.5, 2.0]
 svr_grid = {"kernel": kernel,
             "degree": degree, "C": C}
 svrgs = GridSearchCV(svr, svr_grid, cv=5, iid=False, scoring=r2,
-                     return_train_score=False)
-svr_table = pd.DataFrame()
+                     return_train_score=False, refit=False)
+#svr_table = pd.DataFrame()
+open("/home/paul/mesa_models/python_ml_models/results/"+pop+"_svr_grid_parameter_per_gene_chr"+chrom+".txt", "w").write("parameters"+"\t"+"gene_id"+"\t"+"gene_name"+"\t"+"chr"+"\t"+"avg_cv_R2")
+
 
 knn = KNeighborsRegressor()
 n_neighbors = [3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31]
@@ -171,8 +181,9 @@ p = [1, 2, 3]
 knn_grid = {"n_neighbors": n_neighbors,
             "weights": weights, "p": p}
 knngs = GridSearchCV(knn, knn_grid, cv=5, iid=False, scoring=r2,
-                     return_train_score=False)
-knn_table = pd.DataFrame()
+                     return_train_score=False, refit=False)
+#knn_table = pd.DataFrame()
+open("/home/paul/mesa_models/python_ml_models/results/"+pop+"_knn_grid_parameter_per_gene_chr"+chrom+".txt", "w").write("parameters"+"\t"+"gene_id"+"\t"+"gene_name"+"\t"+"chr"+"\t"+"avg_cv_R2")
 
 #text file where to write out the cv results
 open("/home/paul/mesa_models/python_ml_models/results/best_grid_rf_cv_chr"+chrom+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"n_estimators"+"\t"+"time(s)"+"\n")
@@ -205,11 +216,17 @@ for gene in genes:
 
          #extract mean R2 score per gene per parameter
          cv = pd.DataFrame(rfgs.cv_results_)
-         param = list(cv.param_n_estimators)
-         mscore = pd.DataFrame(list(cv.mean_test_score))
-         mscore.columns = [gene]
-         mscore.index = param
-         rf_table = pd.concat([rf_table, mscore], axis=1, sort=True)
+         open("/home/paul/mesa_models/python_ml_models/results/"+pop+"_rf_grid_chr"+chrom+".txt", "a").write("\n"+gene+"\t"+gene_name+"\t"+chrom+"\t")
+         for i in range(len(cv)):
+              open("/home/paul/mesa_models/python_ml_models/results/"+pop+"_rf_grid_chr"+chrom+".txt", "a").write(str(cv.mean_test_score[i])+"\t")
+              open("/home/paul/mesa_models/python_ml_models/results/"+pop+"_rf_grid_parameter_per_gene_chr"+chrom+".txt", "a").write("\n"+str(cv.param_n_estimators[i])+"\t"+gene+"\t"+gene_name+"\t"+chrom+"\t"+str(cv.mean_test_score[i])+"\t")
+
+          
+         #param = list(cv.param_n_estimators)
+         #mscore = pd.DataFrame(list(cv.mean_test_score))
+         #mscore.columns = [gene]
+         #mscore.index = param
+         #rf_table = pd.concat([rf_table, mscore], axis=1, sort=True)
          
          #SVR
          svr_t0 = time.time()
@@ -224,11 +241,14 @@ for gene in genes:
 
          #extract mean R2 score per gene per parameter
          cv = pd.DataFrame(svrgs.cv_results_)
-         param = list(cv.params)
-         mscore = pd.DataFrame(list(cv.mean_test_score))
-         mscore.columns = [gene]
-         mscore.index = param
-         svr_table = pd.concat([svr_table, mscore], axis=1, sort=True)
+         for i in range(len(cv)):
+              open("/home/paul/mesa_models/python_ml_models/results/"+pop+"_svr_grid_parameter_per_gene_chr"+chrom+".txt", "a").write("\n"+str(cv.params[i])+"\t"+gene+"\t"+gene_name+"\t"+chrom+"\t"+str(cv.mean_test_score[i])+"\t")
+              
+         #param = list(cv.params)
+         #mscore = pd.DataFrame(list(cv.mean_test_score))
+         #mscore.columns = [gene]
+         #mscore.index = param
+         #svr_table = pd.concat([svr_table, mscore], axis=1, sort=True)
 
          #KNN
          knn_t0 = time.time()
@@ -243,12 +263,16 @@ for gene in genes:
 
          #extract mean R2 score per gene per parameter
          cv = pd.DataFrame(knngs.cv_results_)
-         param = list(cv.params)
-         mscore = pd.DataFrame(list(cv.mean_test_score))
-         mscore.columns = [gene]
-         mscore.index = param
-         knn_table = pd.concat([knn_table, mscore], axis=1, sort=True)
+         for i in range(len(cv)):
+              open("/home/paul/mesa_models/python_ml_models/results/"+pop+"_knn_grid_parameter_per_gene_chr"+chrom+".txt", "a").write("\n"+str(cv.params[i])+"\t"+gene+"\t"+gene_name+"\t"+chrom+"\t"+str(cv.mean_test_score[i])+"\t")
+
          
-rf_table.to_csv("/home/paul/mesa_models/python_ml_models/results/"+pop+"rf_grid_parameter_per_gene_chr"+chrom+".txt", header=True, index=True, sep="\t")
-svr_table.to_csv("/home/paul/mesa_models/python_ml_models/results/"+pop+"svr_grid_parameter_per_gene_chr"+chrom+".txt", header=True, index=True, sep="\t")
-knn_table.to_csv("/home/paul/mesa_models/python_ml_models/results/"+pop+"knn_grid_parameter_per_gene_chr"+chrom+".txt", header=True, index=True, sep="\t")
+         #param = list(cv.params)
+         #mscore = pd.DataFrame(list(cv.mean_test_score))
+         #mscore.columns = [gene]
+         #mscore.index = param
+         #knn_table = pd.concat([knn_table, mscore], axis=1, sort=True)
+         
+#rf_table.to_csv("/home/paul/mesa_models/python_ml_models/results/"+pop+"rf_grid_parameter_per_gene_chr"+chrom+".txt", header=True, index=True, sep="\t")
+#svr_table.to_csv("/home/paul/mesa_models/python_ml_models/results/"+pop+"svr_grid_parameter_per_gene_chr"+chrom+".txt", header=True, index=True, sep="\t")
+#knn_table.to_csv("/home/paul/mesa_models/python_ml_models/results/"+pop+"knn_grid_parameter_per_gene_chr"+chrom+".txt", header=True, index=True, sep="\t")
