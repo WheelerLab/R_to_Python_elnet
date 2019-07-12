@@ -194,7 +194,7 @@ ypred_frame_svrl = pd.DataFrame()
 ypred_frame_svr = pd.DataFrame()
 ypred_frame_knn = pd.DataFrame()
 
-test_adj_exp_frame = pd.DataFrame()
+#test_adj_exp_frame = pd.DataFrame()
 
 #algorithms to use
 rf = RandomForestRegressor(max_depth=None, random_state=1234, n_estimators=100)
