@@ -27,7 +27,7 @@ evs = make_scorer(explained_variance_score, greater_is_better=True)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("chr", action="store", help="put chromosome no")
-parser.add_argument("chunk", action="store", help="put chromosome no")
+parser.add_argument("chunk", action="store", help="put chromosome chunk no")
 args = parser.parse_args()
 chrom = str(args.chr)
 chunk = str(args.chunk)
