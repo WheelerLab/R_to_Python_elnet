@@ -134,11 +134,11 @@ def snps_intersect(list1, list2):
      return list(set(list1) & set(list2))
 
 
-afa_snp = "/home/paul/mesa_models/split_mesa/"+pop+"_chr"+chrom+"_genotype_chunk"+chunk+".txt"
-gex = "/home/paul/mesa_models/split_mesa/"+pop+"_chr"+chrom+"_gex_chunk"+chunk+".txt"
-cov_file = "/home/paul/mesa_models/AFA_3_PCs.txt"
-geneanotfile = "/home/paul/mesa_models/gencode.v18.annotation.parsed.txt"
-snpfilepath = "/home/paul/mesa_models/AFA_"+chrom+"_annot.txt"
+afa_snp = "/home/paul/Desktop/mesa_models/"+pop+"_chr"+chrom+"_genotype_chunk"+chunk+".txt"
+gex = "/home/paul/Desktop/mesa_models/"+pop+"_chr"+chrom+"_gex_chunk"+chunk+".txt"
+cov_file = "/home/paul/Desktop/mesa_models/AFA_3_PCs.txt"
+geneanotfile = "/home/paul/Desktop/mesa_models/gencode.v18.annotation.parsed.txt"
+snpfilepath = "/home/paul/Desktop/mesa_models/AFA_"+chrom+"_annot.txt"
 
 
 snpannot = get_filtered_snp_annot(snpfilepath)
@@ -156,12 +156,12 @@ rfgs = GridSearchCV(rf, rf_grid, cv=5, iid=False, scoring=r2,
                     return_train_score=False, refit=False)
 #rf_table = pd.DataFrame()
 #write out the column header
-open("/home/paul/Desktop/mesa_models/results/2nd"+pop+"_rf_grid_split_chr"+chrom+"_chunk"+chunk+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"chr"+"\t")
+open("/home/paul/Desktop/mesa_models/results/2nd_"+pop+"_rf_grid_split_chr"+chrom+"_chunk"+chunk+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"chr"+"\t")
 for i in n_estimators:
-     open("/home/paul/Desktop/mesa_models/results/2nd"+pop+"_rf_grid_split_chr"+chrom+"_chunk"+chunk+".txt", "a").write(str(i)+"\t")
+     open("/home/paul/Desktop/mesa_models/results/2nd_"+pop+"_rf_grid_split_chr"+chrom+"_chunk"+chunk+".txt", "a").write(str(i)+"\t")
 
 #second table file for writing out all grid search results
-open("/home/paul/Desktop/mesa_models/results/2nd"+pop+"_rf_grid_split_parameter_per_gene_chr"+chrom+"_chunk"+chunk+".txt", "w").write("parameters"+"\t"+"gene_id"+"\t"+"gene_name"+"\t"+"chr"+"\t"+"avg_cv_R2")
+open("/home/paul/Desktop/mesa_models/results/2nd_"+pop+"_rf_grid_split_parameter_per_gene_chr"+chrom+"_chunk"+chunk+".txt", "w").write("parameters"+"\t"+"gene_id"+"\t"+"gene_name"+"\t"+"chr"+"\t"+"avg_cv_R2")
 
 svr = SVR(gamma="scale")
 kernel = ["linear", "poly", "rbf", "sigmoid"]
@@ -172,7 +172,7 @@ svr_grid = {"kernel": kernel,
 svrgs = GridSearchCV(svr, svr_grid, cv=5, iid=False, scoring=r2,
                      return_train_score=False, refit=False)
 #svr_table = pd.DataFrame()
-open("/home/paul/Desktop/mesa_models/results/2nd"+pop+"_svr_grid_split_parameter_per_gene_chr"+chrom+"_chunk"+chunk+".txt", "w").write("parameters"+"\t"+"gene_id"+"\t"+"gene_name"+"\t"+"chr"+"\t"+"avg_cv_R2")
+open("/home/paul/Desktop/mesa_models/results/2nd_"+pop+"_svr_grid_split_parameter_per_gene_chr"+chrom+"_chunk"+chunk+".txt", "w").write("parameters"+"\t"+"gene_id"+"\t"+"gene_name"+"\t"+"chr"+"\t"+"avg_cv_R2")
 
 
 knn = KNeighborsRegressor()
@@ -184,7 +184,7 @@ knn_grid = {"n_neighbors": n_neighbors,
 knngs = GridSearchCV(knn, knn_grid, cv=5, iid=False, scoring=r2,
                      return_train_score=False, refit=False)
 #knn_table = pd.DataFrame()
-open("/home/paul/Desktop/mesa_models/results/2nd"+pop+"_knn_grid_split_parameter_per_gene_chr"+chrom+"_chunk"+chunk+".txt", "w").write("parameters"+"\t"+"gene_id"+"\t"+"gene_name"+"\t"+"chr"+"\t"+"avg_cv_R2")
+open("/home/paul/Desktop/mesa_models/results/2nd_"+pop+"_knn_grid_split_parameter_per_gene_chr"+chrom+"_chunk"+chunk+".txt", "w").write("parameters"+"\t"+"gene_id"+"\t"+"gene_name"+"\t"+"chr"+"\t"+"avg_cv_R2")
 
 #text file where to write out the cv results
 open("/home/paul/Desktop/mesa_models/results/2nd_best_grid_split_rf_cv_chr"+chrom+"_chunk"+chunk+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"n_estimators"+"\t"+"time(s)"+"\n")
@@ -216,65 +216,60 @@ for gene in genes:
          cis_gt = cis_gt.values
          
          #Random Forest
-         rf_t0 = time.time()#do rf and time it
-         rfgs.fit(cis_gt, adj_exp.ravel())
-         rf_t1 = time.time()
-         rf_tt = str(float(rf_t1 - rf_t0))
-         rf_cv = str(rfgs.best_score_)
-         n = str(rfgs.best_params_["n_estimators"])
-         open("/home/paul/mesa_models/python_ml_models/results/grid_split/best_grid_split_rf_cv_chr"+chrom+"_chunk"+chunk+".txt", "a").write(gene+"\t"+gene_name+"\t"+rf_cv+"\t"+n+"\t"+rf_tt+"\n")
+         if gene not in rf_genes:
+             
+             rf_t0 = time.time()#do rf and time it
+             rfgs.fit(cis_gt, adj_exp.ravel())
+             rf_t1 = time.time()
+             rf_tt = str(float(rf_t1 - rf_t0))
+             rf_cv = str(rfgs.best_score_)
+             n = str(rfgs.best_params_["n_estimators"])
+             open("/home/paul/Desktop/mesa_models/results/2nd_best_grid_split_rf_cv_chr"+chrom+"_chunk"+chunk+".txt", "a").write(gene+"\t"+gene_name+"\t"+rf_cv+"\t"+n+"\t"+rf_tt+"\n")
 
-         #extract mean R2 score per gene per parameter
-         cv = pd.DataFrame(rfgs.cv_results_)
-         open("/home/paul/mesa_models/python_ml_models/results/grid_split/"+pop+"_rf_grid_split_chr"+chrom+"_chunk"+chunk+".txt", "a").write("\n"+gene+"\t"+gene_name+"\t"+chrom+"\t")
-         for i in range(len(cv)):
-              open("/home/paul/mesa_models/python_ml_models/results/grid_split/"+pop+"_rf_grid_split_chr"+chrom+"_chunk"+chunk+".txt", "a").write(str(cv.mean_test_score[i])+"\t")
-              open("/home/paul/mesa_models/python_ml_models/results/grid_split/"+pop+"_rf_grid_split_parameter_per_gene_chr"+chrom+"_chunk"+chunk+".txt", "a").write("\n"+str(cv.param_n_estimators[i])+"\t"+gene+"\t"+gene_name+"\t"+chrom+"\t"+str(cv.mean_test_score[i])+"\t")
+             #extract mean R2 score per gene per parameter
+             cv = pd.DataFrame(rfgs.cv_results_)
+             open("/home/paul/Desktop/mesa_models/results/2nd_"+pop+"_rf_grid_split_chr"+chrom+"_chunk"+chunk+".txt", "a").write("\n"+gene+"\t"+gene_name+"\t"+chrom+"\t")
+             for i in range(len(cv)):
+                  open("/home/paul/Desktop/mesa_models/results/2nd_"+pop+"_rf_grid_split_chr"+chrom+"_chunk"+chunk+".txt", "a").write(str(cv.mean_test_score[i])+"\t")
+                  open("/home/paul/Desktop/mesa_models/results/2nd_"+pop+"_rf_grid_split_parameter_per_gene_chr"+chrom+"_chunk"+chunk+".txt", "a").write("\n"+str(cv.param_n_estimators[i])+"\t"+gene+"\t"+gene_name+"\t"+chrom+"\t"+str(cv.mean_test_score[i])+"\t")
 
-          
-         #param = list(cv.param_n_estimators)
-         #mscore = pd.DataFrame(list(cv.mean_test_score))
-         #mscore.columns = [gene]
-         #mscore.index = param
-         #rf_table = pd.concat([rf_table, mscore], axis=1, sort=True)
          
          #SVR
-         svr_t0 = time.time()
-         svrgs.fit(cis_gt, adj_exp.ravel())
-         svr_t1 = time.time()
-         svr_tt = str(float(svr_t1 - svr_t0))
-         svr_cv = str(svrgs.best_score_)
-         svr_kernel = str(svrgs.best_params_["kernel"])
-         svr_degree = str(svrgs.best_params_["degree"])
-         svr_c = str(svrgs.best_params_["C"])
-         open("/home/paul/mesa_models/python_ml_models/results/grid_split/best_grid_split_svr_cv_chr"+chrom+"_chunk"+chunk+".txt", "a").write(gene+"\t"+gene_name+"\t"+svr_cv+"\t"+svr_kernel+"\t"+svr_degree+"\t"+svr_c+"\t"+svr_tt+"\n")
+         if gene not in svr_genes:
+             
+             svr_t0 = time.time()
+             svrgs.fit(cis_gt, adj_exp.ravel())
+             svr_t1 = time.time()
+             svr_tt = str(float(svr_t1 - svr_t0))
+             svr_cv = str(svrgs.best_score_)
+             svr_kernel = str(svrgs.best_params_["kernel"])
+             svr_degree = str(svrgs.best_params_["degree"])
+             svr_c = str(svrgs.best_params_["C"])
+             open("/home/paul/Desktop/mesa_models/results/2nd_best_grid_split_svr_cv_chr"+chrom+"_chunk"+chunk+".txt", "a").write(gene+"\t"+gene_name+"\t"+svr_cv+"\t"+svr_kernel+"\t"+svr_degree+"\t"+svr_c+"\t"+svr_tt+"\n")
 
-         #extract mean R2 score per gene per parameter
-         cv = pd.DataFrame(svrgs.cv_results_)
-         for i in range(len(cv)):
-              open("/home/paul/mesa_models/python_ml_models/results/grid_split/"+pop+"_svr_grid_split_parameter_per_gene_chr"+chrom+"_chunk"+chunk+".txt", "a").write("\n"+str(cv.params[i])+"\t"+gene+"\t"+gene_name+"\t"+chrom+"\t"+str(cv.mean_test_score[i])+"\t")
+             #extract mean R2 score per gene per parameter
+             cv = pd.DataFrame(svrgs.cv_results_)
+             for i in range(len(cv)):
+                  open("/home/paul/Desktop/mesa_models/results/2nd_"+pop+"_svr_grid_split_parameter_per_gene_chr"+chrom+"_chunk"+chunk+".txt", "a").write("\n"+str(cv.params[i])+"\t"+gene+"\t"+gene_name+"\t"+chrom+"\t"+str(cv.mean_test_score[i])+"\t")
               
-         #param = list(cv.params)
-         #mscore = pd.DataFrame(list(cv.mean_test_score))
-         #mscore.columns = [gene]
-         #mscore.index = param
-         #svr_table = pd.concat([svr_table, mscore], axis=1, sort=True)
 
          #KNN
-         knn_t0 = time.time()
-         knngs.fit(cis_gt, adj_exp.ravel())
-         knn_t1 = time.time()
-         knn_tt = str(float(knn_t1 - knn_t0))
-         knn_cv = str(knngs.best_score_)
-         knn_n = str(knngs.best_params_["n_neighbors"])
-         knn_w = str(knngs.best_params_["weights"])
-         knn_p = str(knngs.best_params_["p"])
-         open("/home/paul/mesa_models/python_ml_models/results/grid_split/best_grid_split_knn_cv_chr"+chrom+"_chunk"+chunk+".txt", "a").write(gene+"\t"+gene_name+"\t"+knn_cv+"\t"+knn_n+"\t"+knn_w+"\t"+knn_p+"\t"+knn_tt+"\n")
+         if gene not in knn_genes:
+             
+             knn_t0 = time.time()
+             knngs.fit(cis_gt, adj_exp.ravel())
+             knn_t1 = time.time()
+             knn_tt = str(float(knn_t1 - knn_t0))
+             knn_cv = str(knngs.best_score_)
+             knn_n = str(knngs.best_params_["n_neighbors"])
+             knn_w = str(knngs.best_params_["weights"])
+             knn_p = str(knngs.best_params_["p"])
+             open("/home/paul/Desktop/mesa_models/results/2nd_best_grid_split_knn_cv_chr"+chrom+"_chunk"+chunk+".txt", "a").write(gene+"\t"+gene_name+"\t"+knn_cv+"\t"+knn_n+"\t"+knn_w+"\t"+knn_p+"\t"+knn_tt+"\n")
 
-         #extract mean R2 score per gene per parameter
-         cv = pd.DataFrame(knngs.cv_results_)
-         for i in range(len(cv)):
-              open("/home/paul/mesa_models/python_ml_models/results/grid_split/"+pop+"_knn_grid_split_parameter_per_gene_chr"+chrom+"_chunk"+chunk+".txt", "a").write("\n"+str(cv.params[i])+"\t"+gene+"\t"+gene_name+"\t"+chrom+"\t"+str(cv.mean_test_score[i])+"\t")
+             #extract mean R2 score per gene per parameter
+             cv = pd.DataFrame(knngs.cv_results_)
+             for i in range(len(cv)):
+                  open("/home/paul/Desktop/mesa_models/results/2nd_"+pop+"_knn_grid_split_parameter_per_gene_chr"+chrom+"_chunk"+chunk+".txt", "a").write("\n"+str(cv.params[i])+"\t"+gene+"\t"+gene_name+"\t"+chrom+"\t"+str(cv.mean_test_score[i])+"\t")
 
          
          #param = list(cv.params)
