@@ -194,11 +194,11 @@ open("/home/paul/Desktop/mesa_models/_new_results/2nd_best_grid_split_knn_cv_chr
 open("/home/paul/Desktop/mesa_models/new_results/2nd_best_grid_split_svr_cv_chr"+chrom+"_chunk"+chunk+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"kernel"+"\t"+"degree"+"\t"+"C"+"\t"+"time(s)"+"\n")
 
 #read in the previous results and take all the genes except the last one so as to rebuild model starting from it
-old_rf = pd.read_csv("/home/paul/Desktop/mesa_models/old_results/grid_split/best_grid_split_rf_cv_chr"+chrom+"_chunk"+chunk".txt", sep="\t")
+old_rf = pd.read_csv("/home/paul/Desktop/mesa_models/old_results/grid_split/best_grid_split_rf_cv_chr"+chrom+"_chunk"+chunk+".txt", sep="\t")
 rf_genes = list(old_rf.Gene_ID[0:old_rf.shape[0]-1]) #capture all genes except last one
-old_knn = pd.read_csv("/home/paul/Desktop/mesa_models/old_results/grid_split/best_grid_split_knn_cv_chr"+chrom+"_chunk"+chunk".txt", sep="\t")
+old_knn = pd.read_csv("/home/paul/Desktop/mesa_models/old_results/grid_split/best_grid_split_knn_cv_chr"+chrom+"_chunk"+chunk+".txt", sep="\t")
 knn_genes = list(old_knn.Gene_ID[0:old_knn.shape[0]-1]) #capture all genes except last one
-old_svr = pd.read_csv("/home/paul/Desktop/mesa_models/old_results/grid_split/best_grid_split_svr_cv_chr"+chrom+"_chunk"+chunk".txt", sep="\t")
+old_svr = pd.read_csv("/home/paul/Desktop/mesa_models/old_results/grid_split/best_grid_split_svr_cv_chr"+chrom+"_chunk"+chunk+".txt", sep="\t")
 svr_genes = list(old_svr.Gene_ID[0:old_svr.shape[0]-1]) #capture all genes except last one
 
 
