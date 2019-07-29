@@ -190,7 +190,7 @@ open("/home/paul/Desktop/mesa_models/new_results/2nd_"+pop+"_knn_grid_split_para
 
 #text file where to write out the cv results
 open("/home/paul/Desktop/mesa_models/new_results/2nd_best_grid_split_rf_cv_chr"+chrom+"_chunk"+chunk+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"n_estimators"+"\t"+"time(s)"+"\n")
-open("/home/paul/Desktop/mesa_models/_new_results/2nd_best_grid_split_knn_cv_chr"+chrom+"_chunk"+chunk+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"n_neigbors"+"\t"+"weights"+"\t"+"p"+"\t"+"time(s)"+"\n")
+open("/home/paul/Desktop/mesa_models/new_results/2nd_best_grid_split_knn_cv_chr"+chrom+"_chunk"+chunk+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"n_neigbors"+"\t"+"weights"+"\t"+"p"+"\t"+"time(s)"+"\n")
 open("/home/paul/Desktop/mesa_models/new_results/2nd_best_grid_split_svr_cv_chr"+chrom+"_chunk"+chunk+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"kernel"+"\t"+"degree"+"\t"+"C"+"\t"+"time(s)"+"\n")
 
 #read in the previous results and take all the genes except the last one so as to rebuild model starting from it
