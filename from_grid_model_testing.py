@@ -23,7 +23,7 @@ parser.add_argument("chr", action="store", help="put chromosome no")
 args = parser.parse_args() #22
 chrom = args.chr
 chrom = str(chrom)
-pop = "AFA"
+pop = "METS"
 
 #time the whole script per chromosome
 
@@ -134,84 +134,98 @@ def snps_intersect(list1, list2):
 
 #chrom = 21 #chromosome number. #this is removed. and initialized early at the top
 
-afa_snp = "/home/paul/mesa_models/AFA_"+str(chrom)+"_snp.txt"
-gex = "/home/paul/mesa_models/meqtl_sorted_AFA_MESA_Epi_GEX_data_sidno_Nk-10.txt"
-cov_file = "/home/paul/mesa_models/AFA_3_PCs.txt"
-geneanotfile = "/home/paul/mesa_models/gencode.v18.annotation.parsed.txt"
-snpfilepath = "/home/paul/mesa_models/AFA_"+str(chrom)+"_annot.txt"
+#train data files
+afa_snp = "/home/pokoro/data/mesa_models/AFA_"+str(chrom)+"_snp.txt"
+gex = "/home/pokoro/data/mesa_models/meqtl_sorted_AFA_MESA_Epi_GEX_data_sidno_Nk-10.txt"
+cov_file = "/home/pokoro/data/mesa_models/AFA_3_PCs.txt"
+geneanotfile = "/home/pokoro/data/mesa_models/gencode.v18.annotation.parsed.txt"
+snpfilepath = "/home/pokoro/data/mesa_models/AFA_"+str(chrom)+"_annot.txt"
 
-test data files
-test_snp = "/home/paul/mesa_models/his/HIS_"+str(chrom)+"_snp.txt"
-test_gex = "/home/paul/mesa_models/meqtl_sorted_HIS_MESA_Epi_GEX_data_sidno_Nk-10.txt"
-test_covfile = "/home/paul/mesa_models/his/HIS_3_PCs.txt"
-test_snpfile = "/home/paul/mesa_models/his/HIS_"+str(chrom)+"_annot.txt"
+#test data files
+test_snp = "/home/pokoro/data/METS_model/hg19/METS_"+str(chrom)+"_snp.txt"
+test_gex = "/home/pokoro/data/METS_model/hg19/METS_peer10_all_chr_prot_coding_gex.txt"
+test_covfile = "/home/pokoro/data/METS_model/hg19/METS_3_PCs.txt"
+test_snpfile = "/home/pokoro/data/METS_model/hg19/METS_"+str(chrom)+"_annot.txt"
+gencodev28 = "/home/pokoro/data/METS_model/hg19/gencode.v28_annotation.parsed.txt"
 
 #train functioning
 snpannot = get_filtered_snp_annot(snpfilepath)
 geneannot = get_gene_annotation(geneanotfile, chrom)
+expr_df = get_gene_expression(gex, geneannot) #this had to created early to avoid empty df downstream
+annot_geneid = geneannot["gene_id"]#remove decimal from gene_id
+annot_geneid = list(annot_geneid)
+agid = []
+for i in annot_geneid:
+	agid.append(i[0:(i.find("."))])
+geneannot["gene_id"] = agid #replace with non decimal gene_id
+
 cov = get_covariates(cov_file)
-expr_df = get_gene_expression(gex, geneannot)
+
 genes = list(expr_df.columns)
 gt_df = get_maf_filtered_genotype(afa_snp, 0.01)
 train_ids = list(gt_df.index)
-
+train_g = [] #where to store the non decimal gene_id
+for i in genes:
+	train_g.append(i[0:(i.find("."))])
+expr_df.columns = train_g #use the non decimal gene_id to rename the expr_df col
+genes = list(expr_df.columns) #take out the new non decimal gene_id
 #adj_exp_frame = pd.DataFrame()
 
 
 #test functioning
 test_snpannot = get_filtered_snp_annot(test_snpfile)
+test_geneannot = get_gene_annotation(gencodev28, chrom)
+test_expr_df = get_gene_expression(test_gex, test_geneannot) #important to create early
+test_annot_geneid = test_geneannot["gene_id"]#remove decimal from gene_id
+test_annot_geneid = list(test_annot_geneid)
+test_agid = []
+for i in test_annot_geneid:
+	test_agid.append(i[0:(i.find("."))])
+test_geneannot["gene_id"] = test_agid #replace with non decimal gene_id
+
 test_cov = get_covariates(test_covfile)
-test_expr_df = get_gene_expression(test_gex, geneannot)
+
 test_genes = list(test_expr_df.columns)
 test_gt_df = get_maf_filtered_genotype(test_snp, 0.01)
 test_ids = list(test_gt_df.index)
+test_g = []
+for i in test_genes:
+	test_g.append(i[0:(i.find("."))])
+test_expr_df.columns = test_g
+test_genes = list(test_expr_df.columns)
 
 #frame to store the ypred and test adjusted expression
 ypred_frame_rf = pd.DataFrame() 
 #ypred_frame_svrl = pd.DataFrame()
 ypred_frame_svr = pd.DataFrame()
 ypred_frame_knn = pd.DataFrame()
-#ypred_frame_elnet = pd.DataFrame()
 
 #test_adj_exp_frame = pd.DataFrame()
 
 #read in the grid search best result files and take the params to fit the model
-rf_grid = pd.read_csv("/home/paul/mesa_models/python_ml_models/results/grid_split/best_grid_split_rf_cv_full_chr"+chrom+".txt", sep="\t")
-knn_grid = pd.read_csv("/home/paul/mesa_models/python_ml_models/results/grid_split/best_grid_split_knn_cv_full_chr"+chrom+".txt", sep="\t")
-svr_grid = pd.read_csv("/home/paul/mesa_models/python_ml_models/results/grid_split/best_grid_split_rf_cv_full_chr"+chrom+".txt", sep="\t")
+rf_grid = pd.read_csv("/home/pokoro/data/mesa_models/python_ml_models/merged_chunk_results/best_grid_rf_chr"+chrom+"_full.txt", sep="\t")
+knn_grid = pd.read_csv("/home/pokoro/data/mesa_models/python_ml_models/merged_chunk_results/best_grid_knn_chr"+chrom+"_full.txt", sep="\t")
+svr_grid = pd.read_csv("/home/pokoro/data/mesa_models/python_ml_models/merged_chunk_results/best_grid_svr_chr"+chrom+"_full.txt", sep="\t")
 
 #algorithms to use
-rf = RandomForestRegressor(max_depth=None, random_state=1234, n_estimators=100)
-svr = SVR(kernel="rbf", gamma="auto")
-knn = KNeighborsRegressor(n_neighbors=10, weights = "distance")
-#elnet = ElasticNet(alpha=0.1, random_state=1234)
-#models = [rf,svrl,svr,knn]
 
 #text file where to write out the cv and test results
-#open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_rf_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
-#open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_knn_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
-#open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_svr_linear_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
+open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_AFA_2_"+pop+"_rf_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
+open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_AFA_2_"+pop+"_knn_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
+open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_AFA_2_"+pop+"_svr_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
 #open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_svr_rbf_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
 
 #open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_elnet_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
 
 
 for gene in genes:
-     #prepare test_adj_exp for writing out to a file
-     gg = [gene] #just to cast the gene id to list because pandas need it to be in list before it can be used as col name
-     coords = get_gene_coords(geneannot, gene)
-     expr_vec = expr_df[gene]#observed exp
-     adj_exp = adjust_for_covariates(list(expr_vec), cov)#adjusted exp
-     
-     adj_exp_pd = pd.DataFrame(adj_exp)
-     adj_exp_pd.columns = gg
-     adj_exp_pd.index = train_ids
-     adj_exp_frame = pd.concat([adj_exp_frame, adj_exp_pd], axis=1, sort=True)
-
      
     if gene in test_genes:
-        coords = get_gene_coords(geneannot, gene)
+        
+        train_coords = get_gene_coords(geneannot, gene)        
+        test_coords = get_gene_coords(test_geneannot, gene)
         gene_name = get_gene_name(geneannot, gene)
+        
         #print(gene)
         expr_vec = expr_df[gene]#observed exp
         test_expr_vec = test_expr_df[gene]#observed exp
@@ -243,48 +257,11 @@ for gene in genes:
                   #build the model
                   #adj_exp = adj_exp.values #not needed after making adj_exp a numpy array above
                   cis_gt = cis_gt.values
-                  test_cis_gt = test_cis_gt.values
-                  test_yobs = test_expr_vec.values
-
-                  #prepare test_adj_exp for writing out to a file
-                  test_adj_exp_pd = pd.DataFrame(test_adj_exp)
-                  test_adj_exp_pd.columns = gg
-                  test_adj_exp_pd.index = test_ids
-                  test_adj_exp_frame = pd.concat([test_adj_exp_frame, test_adj_exp_pd], axis=1, sort=True)
+                  test_cis_gt = test_cis_gt.values        
                   
-                  #these steps can be shortened with a loop where the models are in a list or dictionary
                   #Random Forest
-                  #rf_t0 = time.time()#do rf and time it
-                  #rf_cv = str(float(mean(cross_val_score(rf, cis_gt, adj_exp.ravel(), cv=5))))
-                  #rf_t1 = time.time()
-                  #rf_tt = str(float(rf_t1 - rf_t0))
-                  elnet.fit(cis_gt, adj_exp.ravel())
-                  ypred = elnet.predict(test_cis_gt)
-
-                  #prepare ypred for writing out to a file
-                  ypred_pd = pd.DataFrame(ypred)
-                  
-                  ypred_pd.columns = gg
-                  ypred_pd.index = test_ids
-                  ypred_frame_elnet = pd.concat([ypred_frame_rf, ypred_pd], axis=1, sort=True)
-                  
-                  pa = stats.pearsonr(test_adj_exp, ypred)
-                  pacoef = str(float(pa[0]))
-                  papval = str(float(pa[1]))
-                  pb = stats.pearsonr(test_yobs, ypred)
-                  pbcoef = str(float(pb[0]))
-                  pbpval = str(float(pb[1]))
-                  sc = stats.spearmanr(test_adj_exp, ypred)
-                  sccoef = str(float(sc[0]))
-                  scpval = str(float(sc[1]))
-                  sd = stats.spearmanr(test_yobs, ypred)
-                  sdcoef = str(float(sd[0]))
-                  sdpval = str(float(sd[1]))
-                  open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_elnet_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
-
-
-
-                  
+                  n_tree = rf_grid[rf_grid['Gene_Name']==gene_name].iloc[0,3]
+                  rf = RandomForestRegressor(random_state=1234, n_estimators=n_tree)
                   rf.fit(cis_gt, adj_exp.ravel())
                   ypred = rf.predict(test_cis_gt)
 
@@ -307,42 +284,13 @@ for gene in genes:
                   sd = stats.spearmanr(test_yobs, ypred)
                   sdcoef = str(float(sd[0]))
                   sdpval = str(float(sd[1]))
-                  open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_rf_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
+                  open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_ptimized_AFA_2_"+pop+"_rf_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
 
-                  #SVR Linear
-                  #svrl_t0 = time.time()#time it
-                  #svrl_cv = str(float(mean(cross_val_score(svrl, cis_gt, adj_exp.ravel(), cv=5))))
-                  #svrl_t1 = time.time()
-                  #svrl_tt = str(float(svrl_t1 - svrl_t0))
-                  svrl.fit(cis_gt, adj_exp.ravel())
-                  ypred = svrl.predict(test_cis_gt)
-                  
-                  #prepare ypred for writing out to a file
-                  yprep_pd = pd.DataFrame(ypred)
-                  
-                  ypred_pd.columns = gg
-                  ypred_pd.index = test_ids
-                  ypred_frame_svrl = pd.concat([ypred_frame_svrl, ypred_pd], axis=1, sort=True)
-                  
-                  pa = stats.pearsonr(test_adj_exp, ypred)
-                  pacoef = str(float(pa[0]))
-                  papval = str(float(pa[1]))
-                  pb = stats.pearsonr(test_yobs, ypred)
-                  pbcoef = str(float(pb[0]))
-                  pbpval = str(float(pb[1]))
-                  sc = stats.spearmanr(test_adj_exp, ypred)
-                  sccoef = str(float(sc[0]))
-                  scpval = str(float(sc[1]))
-                  sd = stats.spearmanr(test_yobs, ypred)
-                  sdcoef = str(float(sd[0]))
-                  sdpval = str(float(sd[1]))
-                  open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_svr_linear_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
-                  
-                  #SVR RBF
-                  #svr_t0 = time.time()#time it
-                  #svr_cv = str(float(mean(cross_val_score(svr, cis_gt, adj_exp.ravel(), cv=5))))
-                  #svr_t1 = time.time()
-                  #svr_tt = str(float(svr_t1 - svr_t0))
+                  #Support Vector Machine
+                  kernel = svr_grid[svr_grid['Gene_Name']==gene_name].iloc[0,3]
+                  degree = kernel = svr_grid[svr_grid['Gene_Name']==gene_name].iloc[0,4]
+                  c = svr_grid[svr_grid['Gene_Name']==gene_name].iloc[0,5]
+                  svr = SVR(gamma="scale", kernel=kernel, degree=degree, C=c)
                   svr.fit(cis_gt, adj_exp.ravel())
                   ypred = svr.predict(test_cis_gt)
                   
@@ -365,13 +313,13 @@ for gene in genes:
                   sd = stats.spearmanr(test_yobs, ypred)
                   sdcoef = str(float(sd[0]))
                   sdpval = str(float(sd[1]))
-                  open("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_svr_rbf_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
-
-                  #KNN
-                  #knn_t0 = time.time()#time it
-                  #knn_cv = str(float(mean(cross_val_score(knn, cis_gt, adj_exp.ravel(), cv=5))))
-                  #knn_t1 = time.time()
-                  #knn_tt = str(float(knn_t1 - knn_t0))
+                  open("/home/pokoro/mesa_models/python_ml_models/results/grid_optimized_AFA_2_"+pop+"_svr_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
+                  
+                  
+                  #K Nearest Neighbour
+                  k = knn_grid[knn_grid['Gene_Name']==gene_name].iloc[0,3]
+                  weight = k = knn_grid[knn_grid['Gene_Name']==gene_name].iloc[0,4]
+                  knn = KNeighborsRegressor(n_neighbors=k, weights = weight)
                   knn.fit(cis_gt, adj_exp.ravel())
                   ypred = knn.predict(test_cis_gt)
                   
@@ -398,12 +346,12 @@ for gene in genes:
 
         
 
-ypred_frame_rf.to_csv("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_rf_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
-ypred_frame_svrl.to_csv("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_svr_linear_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
-ypred_frame_svr.to_csv("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_svr_rbf_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
-ypred_frame_knn.to_csv("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_knn_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
+ypred_frame_rf.to_csv("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_AFA_2_"+pop+"_rf_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
+#ypred_frame_svrl.to_csv("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_svr_linear_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
+ypred_frame_svr.to_csv("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_AFA_2_"+pop+"_svr_rbf_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
+ypred_frame_knn.to_csv("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_AFA_2_"+pop+"_knn_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
 #test_adj_exp_frame.to_csv("/home/paul/mesa_models/python_ml_models/results/"+pop+"_pc_adjusted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
-ypred_frame_elnet.to_csv("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_elnet_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
+#ypred_frame_elnet.to_csv("/home/paul/mesa_models/python_ml_models/results/AFA_2_"+pop+"_elnet_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
 
 #adj_exp_frame.to_csv("/home/paul/mesa_models/python_ml_models/results/"+pop+"_pc_adjusted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
 #t1 = time.time()
