@@ -236,8 +236,8 @@ for gene in genes:
         #break
         #expr_vec = expr_df[gene]
         #adj_exp = adjust_for_covariates(expr_vec, cov)
-        cis_gt = get_cis_genotype(gt_df, snpannot, coords)
-        test_cis_gt = get_cis_genotype(test_gt_df, test_snpannot, coords)
+        cis_gt = get_cis_genotype(gt_df, snpannot, train_coords)
+        test_cis_gt = get_cis_genotype(test_gt_df, test_snpannot, test_coords)
 
         if (type(cis_gt) != int) & (type(test_cis_gt) != int):#just to be sure the cis genotype is not empty
              
@@ -257,7 +257,8 @@ for gene in genes:
                   #build the model
                   #adj_exp = adj_exp.values #not needed after making adj_exp a numpy array above
                   cis_gt = cis_gt.values
-                  test_cis_gt = test_cis_gt.values        
+                  test_cis_gt = test_cis_gt.values
+                  test_yobs = test_expr_vec.values
                   
                   #Random Forest
                   n_tree = rf_grid[rf_grid['Gene_Name']==gene_name].iloc[0,3]
@@ -284,13 +285,14 @@ for gene in genes:
                   sd = stats.spearmanr(test_yobs, ypred)
                   sdcoef = str(float(sd[0]))
                   sdpval = str(float(sd[1]))
-                  open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_ptimized_AFA_2_"+pop+"_rf_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
+                  open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_AFA_2_"+pop+"_rf_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
 
                   #Support Vector Machine
                   kernel = svr_grid[svr_grid['Gene_Name']==gene_name].iloc[0,3]
                   degree = kernel = svr_grid[svr_grid['Gene_Name']==gene_name].iloc[0,4]
                   c = svr_grid[svr_grid['Gene_Name']==gene_name].iloc[0,5]
                   svr = SVR(gamma="scale", kernel=kernel, degree=degree, C=c)
+                  #svr = SVR()
                   svr.fit(cis_gt, adj_exp.ravel())
                   ypred = svr.predict(test_cis_gt)
                   
