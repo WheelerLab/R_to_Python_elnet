@@ -10,7 +10,7 @@ from sklearn.preprocessing import scale
 from pandas import DataFrame
 import pickle
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.svm import SVR
+#from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
 import time
 from scipy import stats
@@ -289,10 +289,9 @@ for gene in genes:
 
                   #Support Vector Machine
                   kernel = svr_grid[svr_grid['Gene_Name']==gene_name].iloc[0,3]
-                  degree = kernel = svr_grid[svr_grid['Gene_Name']==gene_name].iloc[0,4]
+                  degree = svr_grid[svr_grid['Gene_Name']==gene_name].iloc[0,4]
                   c = svr_grid[svr_grid['Gene_Name']==gene_name].iloc[0,5]
                   svr = SVR(gamma="scale", kernel=kernel, degree=degree, C=c)
-                  #svr = SVR()
                   svr.fit(cis_gt, adj_exp.ravel())
                   ypred = svr.predict(test_cis_gt)
                   
@@ -320,7 +319,7 @@ for gene in genes:
                   
                   #K Nearest Neighbour
                   k = knn_grid[knn_grid['Gene_Name']==gene_name].iloc[0,3]
-                  weight = k = knn_grid[knn_grid['Gene_Name']==gene_name].iloc[0,4]
+                  weight = knn_grid[knn_grid['Gene_Name']==gene_name].iloc[0,4]
                   knn = KNeighborsRegressor(n_neighbors=k, weights = weight)
                   knn.fit(cis_gt, adj_exp.ravel())
                   ypred = knn.predict(test_cis_gt)
