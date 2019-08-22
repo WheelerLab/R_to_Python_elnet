@@ -195,8 +195,7 @@ test_expr_df.columns = test_g
 test_genes = list(test_expr_df.columns)
 
 #frame to store the ypred and test adjusted expression
-ypred_frame_rf = pd.DataFrame() 
-#ypred_frame_svrl = pd.DataFrame()
+ypred_frame_rf = pd.DataFrame()
 ypred_frame_svr = pd.DataFrame()
 ypred_frame_knn = pd.DataFrame()
 
@@ -346,3 +345,8 @@ for gene in genes:
 ypred_frame_rf.to_csv("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_AFA_2_"+pop+"_rf_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
 ypred_frame_svr.to_csv("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_AFA_2_"+pop+"_svr_rbf_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
 ypred_frame_knn.to_csv("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_AFA_2_"+pop+"_knn_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
+
+f = gene_name in rf_grid['Gene_Name']
+if f == False:
+	print ('yes')
+
