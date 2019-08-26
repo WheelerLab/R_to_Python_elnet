@@ -256,7 +256,8 @@ for gene in genes:
                   test_yobs = test_expr_vec.values
                   
                   #Random Forest
-                  f = gene_name in rf_grid['Gene_Name']
+                  gnlist = list(rf_grid['Gene_Name'])
+                  f = gene_name in gnlist
                   if f != False: #Just to be sure that the gene exist in the RF best grid dataframe
                        
                        n_tree = rf_grid[rf_grid['Gene_Name']==gene_name].iloc[0,3]
@@ -286,7 +287,8 @@ for gene in genes:
                        open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_AFA_2_"+pop+"_rf_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
 
                   #Support Vector Machine
-                  f = gene_name in svr_grid['Gene_Name']
+                  gnlist = list(svr_grid['Gene_Name'])
+                  f = gene_name in gnlist
                   if f != False: #Just to be sure that the gene exist in the SVR best grid dataframe
                        
                        kernel = svr_grid[svr_grid['Gene_Name']==gene_name].iloc[0,3]
@@ -319,7 +321,8 @@ for gene in genes:
                   
                   
                   #K Nearest Neighbour
-                  f = gene_name in knn_grid['Gene_Name']
+                  gnlist = list(knn_grid['Gene_Name'])
+                  f = gene_name in gnlist
                   if f != False: #Just to be sure that the gene exist in the KNN best grid dataframe
                        
                        k = knn_grid[knn_grid['Gene_Name']==gene_name].iloc[0,3]
