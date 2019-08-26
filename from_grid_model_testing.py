@@ -256,89 +256,98 @@ for gene in genes:
                   test_yobs = test_expr_vec.values
                   
                   #Random Forest
-                  n_tree = rf_grid[rf_grid['Gene_Name']==gene_name].iloc[0,3]
-                  rf = RandomForestRegressor(random_state=1234, n_estimators=n_tree)
-                  rf.fit(cis_gt, adj_exp.ravel())
-                  ypred = rf.predict(test_cis_gt)
+                  f = gene_name in rf_grid['Gene_Name']
+                  if f != False: #Just to be sure that the gene exist in the RF best grid dataframe
+                       
+                       n_tree = rf_grid[rf_grid['Gene_Name']==gene_name].iloc[0,3]
+                       rf = RandomForestRegressor(random_state=1234, n_estimators=n_tree)
+                       rf.fit(cis_gt, adj_exp.ravel())
+                       ypred = rf.predict(test_cis_gt)
 
-                  #prepare ypred for writing out to a file
-                  ypred_pd = pd.DataFrame(ypred)
-                  
-                  ypred_pd.columns = gg
-                  ypred_pd.index = test_ids
-                  ypred_frame_rf = pd.concat([ypred_frame_rf, ypred_pd], axis=1, sort=True)
-                  
-                  pa = stats.pearsonr(test_adj_exp, ypred)
-                  pacoef = str(float(pa[0]))
-                  papval = str(float(pa[1]))
-                  pb = stats.pearsonr(test_yobs, ypred)
-                  pbcoef = str(float(pb[0]))
-                  pbpval = str(float(pb[1]))
-                  sc = stats.spearmanr(test_adj_exp, ypred)
-                  sccoef = str(float(sc[0]))
-                  scpval = str(float(sc[1]))
-                  sd = stats.spearmanr(test_yobs, ypred)
-                  sdcoef = str(float(sd[0]))
-                  sdpval = str(float(sd[1]))
-                  open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_AFA_2_"+pop+"_rf_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
+                       #prepare ypred for writing out to a file
+                       ypred_pd = pd.DataFrame(ypred)
+                       
+                       ypred_pd.columns = gg
+                       ypred_pd.index = test_ids
+                       ypred_frame_rf = pd.concat([ypred_frame_rf, ypred_pd], axis=1, sort=True)
+                       
+                       pa = stats.pearsonr(test_adj_exp, ypred)
+                       pacoef = str(float(pa[0]))
+                       papval = str(float(pa[1]))
+                       pb = stats.pearsonr(test_yobs, ypred)
+                       pbcoef = str(float(pb[0]))
+                       pbpval = str(float(pb[1]))
+                       sc = stats.spearmanr(test_adj_exp, ypred)
+                       sccoef = str(float(sc[0]))
+                       scpval = str(float(sc[1]))
+                       sd = stats.spearmanr(test_yobs, ypred)
+                       sdcoef = str(float(sd[0]))
+                       sdpval = str(float(sd[1]))
+                       open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_AFA_2_"+pop+"_rf_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
 
                   #Support Vector Machine
-                  kernel = svr_grid[svr_grid['Gene_Name']==gene_name].iloc[0,3]
-                  degree = svr_grid[svr_grid['Gene_Name']==gene_name].iloc[0,4]
-                  c = svr_grid[svr_grid['Gene_Name']==gene_name].iloc[0,5]
-                  svr = SVR(gamma="scale", kernel=kernel, degree=degree, C=c)
-                  svr.fit(cis_gt, adj_exp.ravel())
-                  ypred = svr.predict(test_cis_gt)
-                  
-                  #prepare ypred for writing out to a file
-                  yprep_pd = pd.DataFrame(ypred)
-                  
-                  ypred_pd.columns = gg
-                  ypred_pd.index = test_ids
-                  ypred_frame_svr = pd.concat([ypred_frame_svr, ypred_pd], axis=1, sort=True)
-                  
-                  pa = stats.pearsonr(test_adj_exp, ypred)
-                  pacoef = str(float(pa[0]))
-                  papval = str(float(pa[1]))
-                  pb = stats.pearsonr(test_yobs, ypred)
-                  pbcoef = str(float(pb[0]))
-                  pbpval = str(float(pb[1]))
-                  sc = stats.spearmanr(test_adj_exp, ypred)
-                  sccoef = str(float(sc[0]))
-                  scpval = str(float(sc[1]))
-                  sd = stats.spearmanr(test_yobs, ypred)
-                  sdcoef = str(float(sd[0]))
-                  sdpval = str(float(sd[1]))
-                  open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_AFA_2_"+pop+"_svr_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
+                  f = gene_name in svr_grid['Gene_Name']
+                  if f != False: #Just to be sure that the gene exist in the SVR best grid dataframe
+                       
+                       kernel = svr_grid[svr_grid['Gene_Name']==gene_name].iloc[0,3]
+                       degree = svr_grid[svr_grid['Gene_Name']==gene_name].iloc[0,4]
+                       c = svr_grid[svr_grid['Gene_Name']==gene_name].iloc[0,5]
+                       svr = SVR(gamma="scale", kernel=kernel, degree=degree, C=c)
+                       svr.fit(cis_gt, adj_exp.ravel())
+                       ypred = svr.predict(test_cis_gt)
+                       
+                       #prepare ypred for writing out to a file
+                       yprep_pd = pd.DataFrame(ypred)
+                       
+                       ypred_pd.columns = gg
+                       ypred_pd.index = test_ids
+                       ypred_frame_svr = pd.concat([ypred_frame_svr, ypred_pd], axis=1, sort=True)
+                       
+                       pa = stats.pearsonr(test_adj_exp, ypred)
+                       pacoef = str(float(pa[0]))
+                       papval = str(float(pa[1]))
+                       pb = stats.pearsonr(test_yobs, ypred)
+                       pbcoef = str(float(pb[0]))
+                       pbpval = str(float(pb[1]))
+                       sc = stats.spearmanr(test_adj_exp, ypred)
+                       sccoef = str(float(sc[0]))
+                       scpval = str(float(sc[1]))
+                       sd = stats.spearmanr(test_yobs, ypred)
+                       sdcoef = str(float(sd[0]))
+                       sdpval = str(float(sd[1]))
+                       open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_AFA_2_"+pop+"_svr_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
                   
                   
                   #K Nearest Neighbour
-                  k = knn_grid[knn_grid['Gene_Name']==gene_name].iloc[0,3]
-                  weight = knn_grid[knn_grid['Gene_Name']==gene_name].iloc[0,4]
-                  knn = KNeighborsRegressor(n_neighbors=k, weights = weight)
-                  knn.fit(cis_gt, adj_exp.ravel())
-                  ypred = knn.predict(test_cis_gt)
-                  
-                  #prepare ypred for writing out to a file
-                  yprep_pd = pd.DataFrame(ypred)
-                  
-                  ypred_pd.columns = gg
-                  ypred_pd.index = test_ids
-                  ypred_frame_knn = pd.concat([ypred_frame_knn, ypred_pd], axis=1, sort=True)
-                  
-                  pa = stats.pearsonr(test_adj_exp, ypred)
-                  pacoef = str(float(pa[0]))
-                  papval = str(float(pa[1]))
-                  pb = stats.pearsonr(test_yobs, ypred)
-                  pbcoef = str(float(pb[0]))
-                  pbpval = str(float(pb[1]))
-                  sc = stats.spearmanr(test_adj_exp, ypred)
-                  sccoef = str(float(sc[0]))
-                  scpval = str(float(sc[1]))
-                  sd = stats.spearmanr(test_yobs, ypred)
-                  sdcoef = str(float(sd[0]))
-                  sdpval = str(float(sd[1]))
-                  open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_AFA_2_"+pop+"_knn_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
+                  f = gene_name in knn_grid['Gene_Name']
+                  if f != False: #Just to be sure that the gene exist in the KNN best grid dataframe
+                       
+                       k = knn_grid[knn_grid['Gene_Name']==gene_name].iloc[0,3]
+                       weight = knn_grid[knn_grid['Gene_Name']==gene_name].iloc[0,4]
+                       knn = KNeighborsRegressor(n_neighbors=k, weights = weight)
+                       knn.fit(cis_gt, adj_exp.ravel())
+                       ypred = knn.predict(test_cis_gt)
+                       
+                       #prepare ypred for writing out to a file
+                       yprep_pd = pd.DataFrame(ypred)
+                       
+                       ypred_pd.columns = gg
+                       ypred_pd.index = test_ids
+                       ypred_frame_knn = pd.concat([ypred_frame_knn, ypred_pd], axis=1, sort=True)
+                       
+                       pa = stats.pearsonr(test_adj_exp, ypred)
+                       pacoef = str(float(pa[0]))
+                       papval = str(float(pa[1]))
+                       pb = stats.pearsonr(test_yobs, ypred)
+                       pbcoef = str(float(pb[0]))
+                       pbpval = str(float(pb[1]))
+                       sc = stats.spearmanr(test_adj_exp, ypred)
+                       sccoef = str(float(sc[0]))
+                       scpval = str(float(sc[1]))
+                       sd = stats.spearmanr(test_yobs, ypred)
+                       sdcoef = str(float(sd[0]))
+                       sdpval = str(float(sd[1]))
+                       open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_AFA_2_"+pop+"_knn_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
 
         
 
@@ -346,7 +355,7 @@ ypred_frame_rf.to_csv("/home/pokoro/data/mesa_models/python_ml_models/results/gr
 ypred_frame_svr.to_csv("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_AFA_2_"+pop+"_svr_rbf_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
 ypred_frame_knn.to_csv("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_AFA_2_"+pop+"_knn_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
 
-f = gene_name in rf_grid['Gene_Name']
-if f == False:
-	print ('yes')
+#f = gene_name in rf_grid['Gene_Name']
+#f f == False:
+#	print ('yes')
 
