@@ -21,14 +21,13 @@ import gzip
 
 parser = argparse.ArgumentParser()
 parser.add_argument("chr", action="store", help="put chromosome no")
-args = parser.parse_args() #22
+parser.add_argument("chunk", action="store", help="put chromosome chunk no")
+args = parser.parse_args()
 chrom = args.chr
 chrom = str(chrom)
-pop = "CAU"
-#time the whole script per chromosome
-#chrom = 20
-#open("/home/paul/mesa_models/python_ml_models/whole_script_chr"+str(chrom)+"_timer.txt", "w").write("Chrom"+"\t"+"Time(s)"+"\n")
-#t0 = time.time()
+chunk = str(args.chunk)
+pop = "AFA"
+
 
 #important functions needed
 def get_filtered_snp_annot (snpfilepath):
@@ -131,13 +130,12 @@ def calc_corr (y, y_pred):
 def snps_intersect(list1, list2):
      return list(set(list1) & set(list2))
 
-#chrom = 21 #chromosome number. #this is removed. and initialized early at the top
 
-afa_snp = "/home/pokoro/data/mesa_models/cau/"+pop+"_"+str(chrom)+"_snp.txt"
-gex = "/home/pokoro/data/mesa_models/meqtl_sorted_"+pop+"_MESA_Epi_GEX_data_sidno_Nk-10.txt"
-cov_file = "/home/pokoro/data/mesa_models/cau/"+pop+"_3_PCs.txt"
+afa_snp = "/home/pokoro/data/mesa_models/split_mesa/"+pop+"_chr"+chrom+"_genotype_chunk"+chunk+".txt"
+gex = "/home/pokoro/data/mesa_models/split_mesa/"+pop+"_chr"+chrom+"_gex_chunk"+chunk+".txt"
+cov_file = "/home/pokoro/data/mesa_models/"+pop+"_3_PCs.txt"
 geneanotfile = "/home/pokoro/data/mesa_models/gencode.v18.annotation.parsed.txt"
-snpfilepath = "/home/pokoro/data/mesa_models/cau/"+pop+"_"+str(chrom)+"_annot.txt"
+snpfilepath = "/home/pokoro/data/mesa_models/"+pop+"_"+str(chrom)+"_annot.txt"
 
 
 snpannot = get_filtered_snp_annot(snpfilepath)
@@ -148,17 +146,10 @@ genes = list(expr_df.columns)
 gt_df = get_maf_filtered_genotype(afa_snp, 0.01)
 
 #algorithms to use
-rf = RandomForestRegressor(max_depth=None, random_state=1234, n_estimators=100)
-svrl = SVR(kernel="linear", gamma="auto")
-svr = SVR(kernel="rbf", gamma="auto")
-knn = KNeighborsRegressor(n_neighbors=10, weights = "distance")
-#models = [rf,svrl,svr,knn]
+rf = RandomForestRegressor(max_depth=None, random_state=1234, n_estimators=5000)
 
 #text file where to write out the cv results
-open("/home/pokoro/data/mesa_models/python_ml_models/results/"+pop+"_rf_cv_chr"+str(chrom)+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"time(s)"+"\n")
-open("/home/pokoro/data/mesa_models/python_ml_models/results/"+pop+"_knn_cv_chr"+str(chrom)+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"time(s)"+"\n")
-open("/home/pokoro/data/mesa_models/python_ml_models/results/"+pop+"_svr_linear_cv_chr"+str(chrom)+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"time(s)"+"\n")
-open("/home/pokoro/data/mesa_models/python_ml_models/results/"+pop+"_svr_rbf_cv_chr"+str(chrom)+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"time(s)"+"\n")
+open("/home/pokoro/data/mesa_models/python_ml_models/results/"+pop+"_rf_5000tree_check_cv_chr"+chrom+"_chunk"+chunk+".txt", "w").write("Gene_ID"+"\t"+"Gene_Name"+"\t"+"CV_R2"+"\t"+"time(s)"+"\n")
 
 for gene in genes:
     coords = get_gene_coords(geneannot, gene)
@@ -176,37 +167,11 @@ for gene in genes:
          
 
          cis_gt = cis_gt.values
-         #these steps can be shortened with a loop where the models are in a list or dictionary
+         
          #Random Forest
          rf_t0 = time.time()#do rf and time it
          rf_cv = str(float(mean(cross_val_score(rf, cis_gt, adj_exp.ravel(), cv=5))))
          rf_t1 = time.time()
          rf_tt = str(float(rf_t1 - rf_t0))
-         open("/home/pokoro/data/mesa_models/python_ml_models/results/"+pop+"_rf_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+rf_cv+"\t"+rf_tt+"\n")
-         #SVR Linear
-         svrl_t0 = time.time()#time it
-         svrl_cv = str(float(mean(cross_val_score(svrl, cis_gt, adj_exp.ravel(), cv=5))))
-         svrl_t1 = time.time()
-         svrl_tt = str(float(svrl_t1 - svrl_t0))
-         open("/home/pokoro/data/mesa_models/python_ml_models/results/"+pop+"_svr_linear_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+svrl_cv+"\t"+svrl_tt+"\n")
-         #SVR RBF
-         svr_t0 = time.time()#time it
-         svr_cv = str(float(mean(cross_val_score(svr, cis_gt, adj_exp.ravel(), cv=5))))
-         svr_t1 = time.time()
-         svr_tt = str(float(svr_t1 - svr_t0))
-         open("/home/pokoro/data/mesa_models/python_ml_models/results/"+pop+"_svr_rbf_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+svr_cv+"\t"+svr_tt+"\n")
-         #KNN
-         knn_t0 = time.time()#time it
-         knn_cv = str(float(mean(cross_val_score(knn, cis_gt, adj_exp.ravel(), cv=5))))
-         knn_t1 = time.time()
-         knn_tt = str(float(knn_t1 - knn_t0))
-         open("/home/pokoro/data/mesa_models/python_ml_models/results/"+pop+"_knn_cv_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+knn_cv+"\t"+knn_tt+"\n")
+         open("/home/pokoro/data/mesa_models/python_ml_models/results/"+pop+"_rf_5000tree_check_cv_chr"+chrom+"_chunk"+chunk+".txt", "a").write(gene+"\t"+gene_name+"\t"+rf_cv+"\t"+rf_tt+"\n")
          
-
-#t1 = time.time()
-#total = str(float(t1-t0))
-#open("/home/paul/mesa_models/python_ml_models/whole_script_chr"+str(chrom)+"_timer.txt", "a").write(str(chrom)+"\t"+total+"\n")
-#coords = get_gene_coords(geneannot, "geneID")#this is where to loop for gene id
-#adj_exp = adjust_for_covariates(expr_vec, cov) #this is loop side
-#cis_gt = get_cis_genotype(gt_df, snpannot, coords) #this is loop side
-

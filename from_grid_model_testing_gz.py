@@ -133,13 +133,14 @@ def snps_intersect(list1, list2):
      return list(set(list1) & set(list2))
 
 #chrom = 21 #chromosome number. #this is removed. and initialized early at the top
-
+folder = "afhi"
+tr_pop = "AFHI"
 #train data files
-afa_snp = "/home/pokoro/data/mesa_models/cau/CAU_"+str(chrom)+"_snp.txt"
-gex = "/home/pokoro/data/mesa_models/meqtl_sorted_CAU_MESA_Epi_GEX_data_sidno_Nk-10.txt"
-cov_file = "/home/pokoro/data/mesa_models/cau/CAU_3_PCs.txt"
+afa_snp = "/home/pokoro/data/mesa_models/"+folder+"/whole_genotypes/"+tr_pop+".chr"+chrom+".genotype.txt.gz"
+gex = "/home/pokoro/data/mesa_models/"+folder+"/"+tr_pop+"_PF10.txt.gz"
+cov_file = "/home/pokoro/data/mesa_models/"+folder+"/PC3_"+tr_pop+"_PCs_sorted.txt"
 geneanotfile = "/home/pokoro/data/mesa_models/gencode.v18.annotation.parsed.txt"
-snpfilepath = "/home/pokoro/data/mesa_models/cau/CAU_"+str(chrom)+"_annot.txt"
+snpfilepath = "/home/pokoro/data/mesa_models/"+folder+"/"+tr_pop+".chr"+chrom+".anno.txt.gz"
 
 #test data files
 test_snp = "/home/pokoro/data/METS_model/hg19/METS_"+str(chrom)+"_snp.txt"
@@ -202,16 +203,16 @@ ypred_frame_knn = pd.DataFrame()
 #test_adj_exp_frame = pd.DataFrame()
 
 #read in the grid search best result files and take the params to fit the model
-rf_grid = pd.read_csv("/home/pokoro/data/mesa_models/python_ml_models/merged_chunk_results/CAU_best_grid_rf_chr"+chrom+"_full.txt", sep="\t")
-knn_grid = pd.read_csv("/home/pokoro/data/mesa_models/python_ml_models/merged_chunk_results/CAU_best_grid_knn_chr"+chrom+"_full.txt", sep="\t")
-svr_grid = pd.read_csv("/home/pokoro/data/mesa_models/python_ml_models/merged_chunk_results/CAU_best_grid_svr_chr"+chrom+"_full.txt", sep="\t")
+rf_grid = pd.read_csv("/home/pokoro/data/mesa_models/python_ml_models/merged_chunk_results/"+tr_pop+"_best_grid_rf_chr"+chrom+"_full.txt", sep="\t")
+knn_grid = pd.read_csv("/home/pokoro/data/mesa_models/python_ml_models/merged_chunk_results/"+tr_pop+"_best_grid_knn_chr"+chrom+"_full.txt", sep="\t")
+svr_grid = pd.read_csv("/home/pokoro/data/mesa_models/python_ml_models/merged_chunk_results/"+tr_pop+"_best_grid_svr_chr"+chrom+"_full.txt", sep="\t")
 
 #algorithms to use
 
 #text file where to write out the cv and test results
-open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_CAU_2_"+pop+"_rf_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
-open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_CAU_2_"+pop+"_knn_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
-open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_CAU_2_"+pop+"_svr_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
+open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_"+tr_pop+"_2_"+pop+"_rf_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
+open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_"+tr_pop+"_2_"+pop+"_knn_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
+open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_"+tr_pop+"_2_"+pop+"_svr_cor_test_chr"+str(chrom)+".txt", "w").write("gene_id"+"\t"+"gene_name"+"\t"+"pearson_yadj_vs_ypred (a)"+"\t"+"a_pval"+"\t"+"pearson_yobs_vs_ypred (b)"+"\t"+"b_pval"+"\t"+"spearman_yadj_vs_ypred (c)"+"\t"+"c_pval"+"\t"+"spearman_yobs_vs_ypred (d)"+"\t"+"d_pval"+"\n")
 
 for gene in genes:
      
@@ -284,7 +285,7 @@ for gene in genes:
                        sd = stats.spearmanr(test_yobs, ypred)
                        sdcoef = str(float(sd[0]))
                        sdpval = str(float(sd[1]))
-                       open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_CAU_2_"+pop+"_rf_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
+                       open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_"+tr_pop+"_2_"+pop+"_rf_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
 
                   #Support Vector Machine
                   gnlist = list(svr_grid['Gene_Name'])
@@ -317,7 +318,7 @@ for gene in genes:
                        sd = stats.spearmanr(test_yobs, ypred)
                        sdcoef = str(float(sd[0]))
                        sdpval = str(float(sd[1]))
-                       open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_CAU_2_"+pop+"_svr_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
+                       open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_"+tr_pop+"_2_"+pop+"_svr_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
                   
                   
                   #K Nearest Neighbour
@@ -350,13 +351,13 @@ for gene in genes:
                        sd = stats.spearmanr(test_yobs, ypred)
                        sdcoef = str(float(sd[0]))
                        sdpval = str(float(sd[1]))
-                       open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_CAU_2_"+pop+"_knn_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
+                       open("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_"+tr_pop+"_2_"+pop+"_knn_cor_test_chr"+str(chrom)+".txt", "a").write(gene+"\t"+gene_name+"\t"+pacoef+"\t"+papval+"\t"+pbcoef+"\t"+pbpval+"\t"+sccoef+"\t"+scpval+"\t"+sdcoef+"\t"+sdpval+"\n")
 
         
 
-ypred_frame_rf.to_csv("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_CAU_2_"+pop+"_rf_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
-ypred_frame_svr.to_csv("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_CAU_2_"+pop+"_svr_rbf_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
-ypred_frame_knn.to_csv("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_CAU_2_"+pop+"_knn_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
+ypred_frame_rf.to_csv("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_"+tr_pop+"_2_"+pop+"_rf_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
+ypred_frame_svr.to_csv("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_"+tr_pop+"_2_"+pop+"_svr_rbf_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
+ypred_frame_knn.to_csv("/home/pokoro/data/mesa_models/python_ml_models/results/grid_optimized_"+tr_pop+"_2_"+pop+"_knn_predicted_gene_expr_chr"+str(chrom)+".txt", header=True, index=True, sep="\t")
 
 #f = gene_name in rf_grid['Gene_Name']
 #f f == False:
