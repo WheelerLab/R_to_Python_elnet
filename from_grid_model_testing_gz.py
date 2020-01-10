@@ -133,8 +133,8 @@ def snps_intersect(list1, list2):
      return list(set(list1) & set(list2))
 
 #chrom = 21 #chromosome number. #this is removed. and initialized early at the top
-folder = "afhi"
-tr_pop = "AFHI"
+folder = "all"
+tr_pop = "ALL"
 #train data files
 afa_snp = "/home/pokoro/data/mesa_models/"+folder+"/whole_genotypes/"+tr_pop+".chr"+chrom+".genotype.txt.gz"
 gex = "/home/pokoro/data/mesa_models/"+folder+"/"+tr_pop+"_PF10.txt.gz"
