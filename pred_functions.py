@@ -177,8 +177,8 @@ test_snpannot = get_filtered_snp_annot(test_annot)
 test_gt_df = get_maf_filtered_genotype(test_snp, 0.01)
 test_ids = list(test_gt_df.index)
 
+gene = genes[459]
 coords = get_gene_coords(geneannot, gene)
-gene = genes[1]
 expr_vec = expr_df[gene]
 adj_exp = adjust_for_covariates(list(expr_vec), cov)
 cis_gt = get_cis_genotype(gt_df, snpannot, coords)
@@ -188,9 +188,13 @@ test_cis_gt = get_cis_genotype(test_gt_df, test_snpannot, coords)
 
 #take the snps
 train_snps = list(cis_gt.columns)
+
 test_snps = list(test_cis_gt.columns)
+
 snp_intersect = snps_intersect(train_snps, test_snps)
+
 cis_gt = cis_gt[snp_intersect]
+
 test_cis_gt = test_cis_gt[snp_intersect]
 
 #if (cis_gt.shape[1] > 0) & (test_cis_gt.shape[1] > 0):
@@ -201,3 +205,16 @@ test_cis_gt = test_cis_gt.values
 svr = SVR(kernel="linear", gamma="auto")
 svr.fit(cis_gt, adj_exp.ravel())
 ypred = svr.predict(test_cis_gt)
+
+
+open("C:/Users/okoro/OneDrive/Desktop/gex.txt", "a").write("gene_id")
+
+for i in range(len(test_ids)):
+    open("C:/Users/okoro/OneDrive/Desktop/gex.txt", "a").write("\t" + str(test_ids[i]))
+
+open("C:/Users/okoro/OneDrive/Desktop/gex.txt", "a").write("\n")
+open("C:/Users/okoro/OneDrive/Desktop/gex.txt", "a").write(str(gene))
+for j in range(len(ypred)):
+    open("C:/Users/okoro/OneDrive/Desktop/gex.txt", "a").write("\t"+str(ypred[j]))
+
+    
