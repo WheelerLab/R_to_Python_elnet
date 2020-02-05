@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.svm import SVR
+#from sklearn.model_selection import train_test_split
 import pandas as pd
 from sklearn.model_selection import cross_val_score
 from statistics import mean
@@ -9,34 +10,30 @@ from sklearn.preprocessing import scale
 from pandas import DataFrame
 import pickle
 from sklearn.ensemble import RandomForestRegressor
+#from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
 import time
 from scipy import stats
 import argparse
 from sklearn.linear_model import ElasticNet
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import explained_variance_score
-from sklearn.metrics import r2_score
-from sklearn.metrics import make_scorer#use to convert metrics to scoring callables
-
-mse = make_scorer(mean_squared_error, greater_is_better=False)
-r2 = make_scorer(r2_score, greater_is_better=True)
-evs = make_scorer(explained_variance_score, greater_is_better=True)
-
+import gzip
 
 parser = argparse.ArgumentParser()
 parser.add_argument("chr", action="store", help="put chromosome no")
-parser.add_argument("chunk", action="store", help="put chromosome chunk no")
-args = parser.parse_args()
-chrom = str(args.chr)
-chunk = str(args.chunk)
-tr_pop = "ALL"
-pop = "CAU_thrombomodulin_rankplt5_pheno"
+args = parser.parse_args() #1-8
+chrom = args.chr
+chrom = str(chrom)
+pop = "afa"
+
+#time the whole script per chromosome
+
+#open("/home/paul/mesa_models/python_ml_models/whole_script_chr"+str(chrom)+"_timer.txt", "w").write("Chrom"+"\t"+"Time(s)"+"\n")
+#t0 = time.time()
 
 #important functions needed
 def get_filtered_snp_annot (snpfilepath):
-     snpanot = pd.read_csv(snpfilepath, sep="\t")  
+     snpanot = pd.read_csv(snpfilepath, sep="\t")
+     #snpanot = snpanot[((snpanot["refAllele"]=="A") & (snpanot["effectAllele"]=="C")) | ((snpanot["refAllele"]=="C") & (snpanot["effectAllele"]=="A")) | ((snpanot["refAllele"]=="A") & (snpanot["effectAllele"]=="G")) | ((snpanot["refAllele"]=="G") & (snpanot["effectAllele"]=="A")) | ((snpanot["refAllele"]=="T") & (snpanot["effectAllele"]=="G")) | ((snpanot["refAllele"]=="G") & (snpanot["effectAllele"]=="T")) | ((snpanot["refAllele"]=="T") & (snpanot["effectAllele"]=="C")) | ((snpanot["refAllele"]=="C") & (snpanot["effectAllele"]=="T"))]
      snpanot = snpanot[(((snpanot["refAllele"]=="A") & (snpanot["effectAllele"]=="C")) | ((snpanot["refAllele"]=="C") & (snpanot["effectAllele"]=="A")) | ((snpanot["refAllele"]=="A") & (snpanot["effectAllele"]=="G")) | ((snpanot["refAllele"]=="G") & (snpanot["effectAllele"]=="A")) | ((snpanot["refAllele"]=="T") & (snpanot["effectAllele"]=="G")) | ((snpanot["refAllele"]=="G") & (snpanot["effectAllele"]=="T")) | ((snpanot["refAllele"]=="T") & (snpanot["effectAllele"]=="C")) | ((snpanot["refAllele"]=="C") & (snpanot["effectAllele"]=="T"))) & (snpanot["rsid"].notna())]
      snpanot = snpanot.drop_duplicates(["varID"])
      return snpanot
@@ -85,7 +82,7 @@ def adjust_for_covariates (expr_vec, cov_df):
       residuals = scale(residuals)
       return residuals
 
-def get_maf_filtered_genotype(genotype_file_name,  maf):
+def get_maf_filtered_genotype(genotype_file_name,  maf): #the input file must have column names
 	gt_df = pd.read_csv(genotype_file_name, 'r', header = 0, index_col = 0,delimiter='\t')
 	effect_allele_freqs = gt_df.mean(axis=1)
 	effect_allele_freqs = [ x / 2 for x in effect_allele_freqs ]
@@ -105,6 +102,7 @@ def get_cis_genotype (gt_df, snp_annot, coords, cis_window=1000000):
            cis_gt = gt_df[intersect]
            return cis_gt
 
+          
 def calc_R2 (y, y_pred):
     tss = 0
     rss = 0
@@ -134,25 +132,42 @@ def calc_corr (y, y_pred):
 def snps_intersect(list1, list2):
      return list(set(list1) & set(list2))
 
-
-tr_snp = "/home/rschubert1/data/split_genotypes_for_paul/"+tr_pop+"/sliced_genotypes/"+tr_pop+"_chr"+chrom+"_genotype_chunk"+chunk+".txt.gz"
-gex = "/home/rschubert1/data/split_genotypes_for_paul/"+tr_pop+"/chunked_expression/"+tr_pop+"_chr"+chrom+"_gex_chunk"+chunk+".txt.gz"
-cov_file = "/home/rschubert1/data/split_genotypes_for_paul/covariates/PC3_"+tr_pop+"_PCs_sorted.txt"
+#chrom = 21 #chromosome number. #this is removed. and initialized early at the top
+folder = "all"
+tr_pop = "ALL"
+#train data files
+afa_snp = "/home/pokoro/data/mesa_models/"+folder+"/whole_genotypes/"+tr_pop+".chr"+chrom+".genotype.txt.gz"
+gex = "/home/pokoro/data/mesa_models/"+folder+"/"+tr_pop+"_PF10.txt.gz"
+cov_file = "/home/pokoro/data/mesa_models/"+folder+"/PC3_"+tr_pop+"_PCs_sorted.txt"
 geneanotfile = "/home/pokoro/data/mesa_models/gencode.v18.annotation.parsed.txt"
-snpfilepath = "/home/rschubert1/data/split_genotypes_for_paul/anno/"+tr_pop+".chr"+chrom+".anno.txt.gz"
+snpfilepath = "/home/pokoro/data/mesa_models/"+folder+"/"+tr_pop+".chr"+chrom+".anno.txt.gz"
+
+#test data files
+test_snp = "/home/pokoro/data/lauren_mesa/ml_dosages/"+pop+"/chr"+chrom+".gz"
+test_annot = "/home/pokoro/data/lauren_mesa/snp_annotation/"+pop+"/chr"+chrom+"_annot.txt"
 
 #train functioning
 snpannot = get_filtered_snp_annot(snpfilepath)
 geneannot = get_gene_annotation(geneanotfile, chrom)
-cov = get_covariates(cov_file)
-expr_df = get_gene_expression(gex, geneannot)
-expr_df.drop(axis=0, inplace=True,labels="PROBE_ID") #Remove the PROBE_ID because ryan did not remove it when he created the expression files, and it causes error downstream
-genes = list(expr_df.columns)
-gt_df = get_maf_filtered_genotype(tr_snp, 0.01)
+expr_df = get_gene_expression(gex, geneannot) #this had to created early to avoid empty df downstream
+annot_geneid = geneannot["gene_id"]#remove decimal from gene_id
+annot_geneid = list(annot_geneid)
+agid = []
+for i in annot_geneid:
+	agid.append(i[0:(i.find("."))])
+geneannot["gene_id"] = agid #replace with non decimal gene_id
 
-#test data files
-test_snp = "/home/pokoro/data/mesa_models/mesa_pheno/thrombotic/cau_imputation_dosage_chr"+chrom+"_chunk"+chunk+".txt"
-test_annot = "/home/pokoro/data/mesa_models/mesa_pheno/thrombotic/cau_imputation_dosage_chr"+chrom+"_annot.txt"
+cov = get_covariates(cov_file)
+
+genes = list(expr_df.columns)
+gt_df = get_maf_filtered_genotype(afa_snp, 0.01)
+train_ids = list(gt_df.index)
+train_g = [] #where to store the non decimal gene_id
+for i in genes:
+	train_g.append(i[0:(i.find("."))])
+expr_df.columns = train_g #use the non decimal gene_id to rename the expr_df col
+genes = list(expr_df.columns) #take out the new non decimal gene_id
+#adj_exp_frame = pd.DataFrame()
 
 
 #test functioning
@@ -160,31 +175,31 @@ test_snpannot = get_filtered_snp_annot(test_annot)
 test_gt_df = get_maf_filtered_genotype(test_snp, 0.01)
 test_ids = list(test_gt_df.index)
 
+
 #frame to store the ypred and test adjusted expression
 ypred_frame_rf = pd.DataFrame()
 ypred_frame_svr = pd.DataFrame()
 ypred_frame_knn = pd.DataFrame()
 
+#test_adj_exp_frame = pd.DataFrame()
 
 #read in the grid search best result files and take the params to fit the model
-rf_grid = pd.read_csv("/home/pokoro/data/mesa_models/python_ml_models/ALL_results/grid_split/"+tr_pop+"_best_grid_split_rf_cv_chr"+chrom+"_chunk"+chunk+".txt", sep="\t")
-knn_grid = pd.read_csv("/home/pokoro/data/mesa_models/python_ml_models/ALL_results/grid_split/"+tr_pop+"_best_grid_split_knn_cv_chr"+chrom+"_chunk"+chunk+".txt", sep="\t")
-svr_grid = pd.read_csv("/home/pokoro/data/mesa_models/python_ml_models/ALL_results/grid_split/"+tr_pop+"_best_grid_split_svr_cv_chr"+chrom+"_chunk"+chunk+".txt", sep="\t")
-
+rf_grid = pd.read_csv("/home/pokoro/data/mesa_models/python_ml_models/merged_chunk_results/"+tr_pop+"_best_grid_rf_chr"+chrom+"_full.txt", sep="\t")
+knn_grid = pd.read_csv("/home/pokoro/data/mesa_models/python_ml_models/merged_chunk_results/"+tr_pop+"_best_grid_knn_chr"+chrom+"_full.txt", sep="\t")
+svr_grid = pd.read_csv("/home/pokoro/data/mesa_models/python_ml_models/merged_chunk_results/"+tr_pop+"_best_grid_svr_chr"+chrom+"_full.txt", sep="\t")
 
 #create file with header to write out expression to file immediately
-open("/home/pokoro/data/mesa_models/mesa_pheno/thrombotic/pred_expr/chunk/chr"+str(chrom)+"_chunk"+chunk+"_"+tr_pop+"_2_"+pop+"rf_pred_expr.txt", "a").write("gene_id")
+open("/home/pokoro/data/twas_mesa/ml_pred/"+pop+"_chr"+chrom+"_rf.txt", "a").write("gene_id")
 for i in range(len(test_ids)):
-     open("/home/pokoro/data/mesa_models/mesa_pheno/thrombotic/pred_expr/chunk/chr"+str(chrom)+"_chunk"+chunk+"_"+tr_pop+"_2_"+pop+"rf_pred_expr.txt", "a").write("\t" + str(test_ids[i]))
+     open("/home/pokoro/data/twas_mesa/ml_pred/"+pop+"_chr"+chrom+"_rf.txt", "a").write("\t" + str(test_ids[i]))
 
-open("/home/pokoro/data/mesa_models/mesa_pheno/thrombotic/pred_expr/chunk/chr"+str(chrom)+"_chunk"+chunk+"_"+tr_pop+"_2_"+pop+"knn_pred_expr.txt", "a").write("gene_id")
+open("/home/pokoro/data/twas_mesa/ml_pred/"+pop+"_chr"+chrom+"_knn.txt", "a").write("gene_id")
 for i in range(len(test_ids)):
-     open("/home/pokoro/data/mesa_models/mesa_pheno/thrombotic/pred_expr/chunk/chr"+str(chrom)+"_chunk"+chunk+"_"+tr_pop+"_2_"+pop+"knn_pred_expr.txt", "a").write("\t" + str(test_ids[i]))
+     open("/home/pokoro/data/twas_mesa/ml_pred/"+pop+"_chr"+chrom+"_knn.txt", "a").write("\t" + str(test_ids[i]))
 
-open("/home/pokoro/data/mesa_models/mesa_pheno/thrombotic/pred_expr/chunk/chr"+str(chrom)+"_chunk"+chunk+"_"+tr_pop+"_2_"+pop+"svr_pred_expr.txt", "a").write("gene_id")
+open("/home/pokoro/data/twas_mesa/ml_pred/"+pop+"_chr"+chrom+"_svr.txt", "a").write("gene_id")
 for i in range(len(test_ids)):
-     open("/home/pokoro/data/mesa_models/mesa_pheno/thrombotic/pred_expr/chunk/chr"+str(chrom)+"_chunk"+chunk+"_"+tr_pop+"_2_"+pop+"svr_pred_expr.txt", "a").write("\t" + str(test_ids[i]))
-
+     open("/home/pokoro/data/twas_mesa/ml_pred/"+pop+"_chr"+chrom+"_svr.txt", "a").write("\t" + str(test_ids[i]))
 
 
 #algorithms to use
@@ -232,10 +247,10 @@ for gene in genes:
                 ypred = rf.predict(test_cis_gt)
 
                 #write out ypred quickly
-                open("/home/pokoro/data/mesa_models/mesa_pheno/thrombotic/pred_expr/chunk/chr"+str(chrom)+"_chunk"+chunk+"_"+tr_pop+"_2_"+pop+"rf_pred_expr.txt", "a").write("\n")
-                open("/home/pokoro/data/mesa_models/mesa_pheno/thrombotic/pred_expr/chunk/chr"+str(chrom)+"_chunk"+chunk+"_"+tr_pop+"_2_"+pop+"rf_pred_expr.txt", "a").write(str(gene))
+                open("/home/pokoro/data/twas_mesa/ml_pred/"+pop+"_chr"+chrom+"_rf.txt", "a").write("\n")
+                open("/home/pokoro/data/twas_mesa/ml_pred/"+pop+"_chr"+chrom+"_rf.txt", "a").write(str(gene))
                 for j in range(len(ypred)):
-                     open("/home/pokoro/data/mesa_models/mesa_pheno/thrombotic/pred_expr/chunk/chr"+str(chrom)+"_chunk"+chunk+"_"+tr_pop+"_2_"+pop+"rf_pred_expr.txt", "a").write("\t"+str(ypred[j]))
+                     open("/home/pokoro/data/twas_mesa/ml_pred/"+pop+"_chr"+chrom+"_rf.txt", "a").write("\t"+str(ypred[j]))
 
                 #prepare ypred for writing out to a file
                 ypred_pd = pd.DataFrame(ypred)
@@ -257,10 +272,10 @@ for gene in genes:
                 ypred = svr.predict(test_cis_gt)
 
                 #write out ypred quickly
-                open("/home/pokoro/data/mesa_models/mesa_pheno/thrombotic/pred_expr/chunk/chr"+str(chrom)+"_chunk"+chunk+"_"+tr_pop+"_2_"+pop+"svr_pred_expr.txt", "a").write("\n")
-                open("/home/pokoro/data/mesa_models/mesa_pheno/thrombotic/pred_expr/chunk/chr"+str(chrom)+"_chunk"+chunk+"_"+tr_pop+"_2_"+pop+"svr_pred_expr.txt", "a").write(str(gene))
+                open("/home/pokoro/data/twas_mesa/ml_pred/"+pop+"_chr"+chrom+"_svr.txt", "a").write("\n")
+                open("/home/pokoro/data/twas_mesa/ml_pred/"+pop+"_chr"+chrom+"_svr.txt", "a").write(str(gene))
                 for j in range(len(ypred)):
-                     open("/home/pokoro/data/mesa_models/mesa_pheno/thrombotic/pred_expr/chunk/chr"+str(chrom)+"_chunk"+chunk+"_"+tr_pop+"_2_"+pop+"svr_pred_expr.txt", "a").write("\t"+str(ypred[j]))
+                     open("/home/pokoro/data/twas_mesa/ml_pred/"+pop+"_chr"+chrom+"_svr.txt", "a").write("\t"+str(ypred[j]))
        
                 #prepare ypred for writing out to a file
                 yprep_pd = pd.DataFrame(ypred)
@@ -282,10 +297,10 @@ for gene in genes:
                 ypred = knn.predict(test_cis_gt)
 
                 #write out ypred quickly
-                open("/home/pokoro/data/mesa_models/mesa_pheno/thrombotic/pred_expr/chunk/chr"+str(chrom)+"_chunk"+chunk+"_"+tr_pop+"_2_"+pop+"knn_pred_expr.txt", "a").write("\n")
-                open("/home/pokoro/data/mesa_models/mesa_pheno/thrombotic/pred_expr/chunk/chr"+str(chrom)+"_chunk"+chunk+"_"+tr_pop+"_2_"+pop+"knn_pred_expr.txt", "a").write(str(gene))
+                open("/home/pokoro/data/twas_mesa/ml_pred/"+pop+"_chr"+chrom+"_knn.txt", "a").write("\n")
+                open("/home/pokoro/data/twas_mesa/ml_pred/"+pop+"_chr"+chrom+"_knn.txt", "a").write(str(gene))
                 for j in range(len(ypred)):
-                     open("/home/pokoro/data/mesa_models/mesa_pheno/thrombotic/pred_expr/chunk/chr"+str(chrom)+"_chunk"+chunk+"_"+tr_pop+"_2_"+pop+"knn_pred_expr.txt", "a").write("\t"+str(ypred[j]))
+                     open("/home/pokoro/data/twas_mesa/ml_pred/"+pop+"_chr"+chrom+"_knn.txt", "a").write("\t"+str(ypred[j]))
                        
                 #prepare ypred for writing out to a file
                 yprep_pd = pd.DataFrame(ypred)
@@ -296,9 +311,7 @@ for gene in genes:
                        
                        
         
-#There was error writing out to this file below because i failed to include the chunk before. so delete all these files in the result chunk folder for chrom 1-8, 22,20,14,19,17,16,15
-#delete only there rf. eg is chr8_chunk1_ALL_2_CAU_thrombomodulin_rankplt5_pheno_rf_pred_gene_expr.txt
-#and chr1_ALL_2_CAU_thrombomodulin_rankplt5_pheno_knn_pred_gene_expr.txt
-ypred_frame_rf.to_csv("/home/pokoro/data/mesa_models/mesa_pheno/thrombotic/pred_expr/chunk/chr"+str(chrom)+"_chunk"+chunk+"_"+tr_pop+"_2_"+pop+"_rf_pred_gene_expr.txt", header=True, index=True, sep="\t")
-ypred_frame_svr.to_csv("/home/pokoro/data/mesa_models/mesa_pheno/thrombotic/pred_expr/chunk/chr"+str(chrom)+"_chunk"+chunk+"_"+tr_pop+"_2_"+pop+"_svr_pred_gene_expr.txt", header=True, index=True, sep="\t")
-ypred_frame_knn.to_csv("/home/pokoro/data/mesa_models/mesa_pheno/thrombotic/pred_expr/chunk/chr"+str(chrom)+"_chunk"+chunk+"_"+tr_pop+"_2_"+pop+"_knn_pred_gene_expr.txt", header=True, index=True, sep="\t")
+
+ypred_frame_rf.to_csv("/home/pokoro/data/twas_mesa/ml_pred/"+pop+"_chr"+chrom+"_rf_bestorder.txt", header=True, index=True, sep="\t")
+ypred_frame_svr.to_csv("/home/pokoro/data/twas_mesa/ml_pred/"+pop+"_chr"+chrom+"_svr_bestorder.txt", header=True, index=True, sep="\t")
+ypred_frame_knn.to_csv("/home/pokoro/data/twas_mesa/ml_pred/"+pop+"_chr"+chrom+"_knn_bestorder.txt", header=True, index=True, sep="\t")

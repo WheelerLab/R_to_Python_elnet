@@ -82,7 +82,7 @@ def adjust_for_covariates (expr_vec, cov_df):
       residuals = scale(residuals)
       return residuals
 
-def get_maf_filtered_genotype(genotype_file_name,  maf):
+def get_maf_filtered_genotype(genotype_file_name,  maf): #the input file must have column names
 	gt_df = pd.read_csv(genotype_file_name, 'r', header = 0, index_col = 0,delimiter='\t')
 	effect_allele_freqs = gt_df.mean(axis=1)
 	effect_allele_freqs = [ x / 2 for x in effect_allele_freqs ]
