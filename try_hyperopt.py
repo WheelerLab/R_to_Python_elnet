@@ -51,7 +51,7 @@ def objective(params):
     regressor_type = params["type"]
     del params["type"]
     if regressor_type == "elastic_net":
-        regressor = ElasticNet(**params)
+        regressor = ElasticNet(random_state=1234, **params)
     elif regressor_type == "rf":
         regressor = RandomForestRegressor(random_state=1234, **params)
     elif regressor_type == "svm":
@@ -111,7 +111,7 @@ best_result = fmin(
 en_space = hp.choice("regressor", [
     {
         "type": "elastic_net",
-        "alpha": hp.lognormal("alpha", 0, 10.0)
+        "alpha": hp.lognormal("alpha", 1.0, 10.0)
     }
 ])
 
